@@ -8,7 +8,8 @@ terraform {
 }
 
 provider hcx {
-    hcx         = "https://10.124.48.11:3390"
+    //hcx         = "https://10.124.48.11:3390"
+    hcx         = "https://192.168.110.70"
     username    = "administrator@vsphere.local"
     password    = "VMware1!"
 }
