@@ -8,11 +8,12 @@ terraform {
 }
 
 provider hcx {
-    //hcx         = "https://10.124.48.11:3390"
-    hcx         = "https://192.168.110.70"
+    hcx         = "https://10.124.48.11"
+    //hcx         = "https://192.168.110.70"
     username    = "administrator@vsphere.local"
     password    = "VMware1!"
 }
+
 
 resource "hcx_site_pairing" "site1" {
     url         = "https://hcx-cloud-01b.corp.local"
@@ -104,19 +105,11 @@ resource "hcx_compute_profile" "compute_profile_1" {
   }
 
   service {
-    name                = "RAV"
-  }
-
-  service {
     name                = "NETWORK_EXTENSION"
   }
 
   service {
     name                = "DISASTER_RECOVERY"
-  }
-
-  service {
-    name                = "SRM"
   }
 
 }
@@ -142,10 +135,6 @@ resource "hcx_service_mesh" "service_mesh_1" {
 
   service {
     name                = "BULK_MIGRATION"
-  }
-
-  service {
-    name                = "RAV"
   }
 
   service {

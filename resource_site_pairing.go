@@ -88,6 +88,28 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	second_try := false
+	if res.Errors != nil {
+		// Try to get certificate
+		certificate_raw := res.Errors[0].Data[0]
+		certificate := certificate_raw["certificate"].(string)
+
+		// Add certificate
+		body := hcx.InsertCertificateBody{
+			Certificate: certificate,
+		}
+		_, err := hcx.InsertCertificate(client, body)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		second_try = true
+	}
+
+	if second_try {
+		res, err = hcx.InsertSitePairing(client, body)
+	}
+
 	// Wait for job completion
 	for {
 		jr, err := hcx.GetJobResult(client, res.Data.JobID)

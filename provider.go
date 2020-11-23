@@ -37,6 +37,7 @@ func Provider() *schema.Provider {
 			"hcx_compute_profile": resourceComputeProfile(),
 			"hcx_service_mesh":    resourceServiceMesh(),
 			"hcx_l2_extension":    resourceL2Extension(),
+			"hcx_vcenter":         resourcevCenter(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"hcx_network_backing": dataSourceNetworkBacking(),
@@ -52,7 +53,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 
-	if (hcxurl != "") && (username != "") && (password != "") {
+	if hcxurl != "" {
 		c, err := hcx.NewClient(&hcxurl, &username, &password)
 		//c := &http.Client{Timeout: 10 * time.Second}
 

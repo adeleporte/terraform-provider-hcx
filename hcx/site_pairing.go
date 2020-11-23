@@ -24,11 +24,18 @@ type PostRemoteCloudConfigResultData struct {
 }
 
 type PostRemoteCloudConfigResult struct {
-	Success   bool                            `json:"success"`
-	Completed bool                            `json:"completed"`
-	Time      int                             `json:"time"`
-	Version   string                          `json:"version"`
-	Data      PostRemoteCloudConfigResultData `json:"data"`
+	Success   bool                               `json:"success"`
+	Completed bool                               `json:"completed"`
+	Time      int                                `json:"time"`
+	Version   string                             `json:"version"`
+	Data      PostRemoteCloudConfigResultData    `json:"data"`
+	Errors    []PostRemoteCloudConfigResultError `json:"errors"`
+}
+
+type PostRemoteCloudConfigResultError struct {
+	Error string                   `json:"error"`
+	Text  string                   `json:"text"`
+	Data  []map[string]interface{} `json:"data"`
 }
 
 type GetRemoteCloudConfigResult struct {

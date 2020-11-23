@@ -12,9 +12,11 @@ import (
 
 // Client -
 type Client struct {
-	HostURL    string
-	HTTPClient *http.Client
-	Token      string
+	HostURL       string
+	HTTPClient    *http.Client
+	Token         string
+	AdminUsername string
+	AdminPassword string
 }
 
 // AuthStruct -
