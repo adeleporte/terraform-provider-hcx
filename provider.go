@@ -38,6 +38,7 @@ func Provider() *schema.Provider {
 			"hcx_service_mesh":    resourceServiceMesh(),
 			"hcx_l2_extension":    resourceL2Extension(),
 			"hcx_vcenter":         resourcevCenter(),
+			"hcx_vmc":             resourceVmc(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"hcx_network_backing": dataSourceNetworkBacking(),

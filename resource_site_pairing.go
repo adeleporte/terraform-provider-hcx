@@ -27,8 +27,9 @@ func resourceSitePairing() *schema.Resource {
 				Required: true,
 			},
 			"password": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"local_vc": &schema.Schema{
 				Type:     schema.TypeString,
@@ -90,6 +91,10 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	second_try := false
 	if res.Errors != nil {
+		if res.Errors[0].Error == "Login failure" {
+			return diag.Errorf("%s", res.Errors[0].Text)
+		}
+
 		// Try to get certificate
 		certificate_raw := res.Errors[0].Data[0]
 		certificate := certificate_raw["certificate"].(string)

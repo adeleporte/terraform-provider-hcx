@@ -1,28 +1,61 @@
+---
+page_title: "HCX/VMC Lab - Full HCX Connector configuration"
+---
+
+This TF file automates the configuration of a HCX lab. It manages creation/update/deletion of :
+* HCX activation and configuration at VMC side
+* Site pairing
+* Network profiles (Management, vMotion and Uplink)
+* Compute profile
+* Service Mesh
+* L2 Extension
+
+## Usage example
+
+```hcl
+
 terraform {
   required_providers {
     hcx = {
-      versions = ["0.1"]
-      source = "vcn.cloud/edu/hcx"
+      source = "adeleporte/hcx"
     }
   }
 }
 
 provider hcx {
-    hcx         = "https://10.124.48.11"
-    //hcx         = "https://192.168.110.70"
+    hcx         = "https://192.168.110.70"
+    username    = "administrator@vsphere.local"
+    password    = "VMware1!"
+}
+
+// Variables definitions
+variable "hcx_vmc_vcenter_password" {
+  type        = string
+  description = "vCenter password (export TF_VAR_hcx_vmc_vcenter_password=...)"
+}
+
+// Provider config
+provider hcx {
+    hcx         = "https://hcx-connector-01a"
     username    = "administrator@vsphere.local"
     password    = "VMware1!"
 }
 
 
-resource "hcx_site_pairing" "site1" {
-    url         = "https://hcx-cloud-01b.corp.local"
-    username    = "administrator@vsphere.local"
-    password    = "VMware1!"
+// Datasources and Resources
+resource "hcx_vmc" "vmc_nico" {  
+    sddc_name   = "mySDDC-name"
+    //export VMC_API_TOKEN=...
+}
+
+resource "hcx_site_pairing" "vmc" {
+    url         = hcx_vmc.vmc_nico.cloud_url
+    username    = "cloudadmin@vmc.local"
+    password    = var.vmc_vcenter_password
 }
 
 resource "hcx_network_profile" "net_management" {
-  vcenter       = hcx_site_pairing.site1.local_vc
+  vcenter       = hcx_site_pairing.vmc.local_vc
   network_name  = "HCX-Management-RegionA01"
   name          = "HCX-Management-RegionA01-profile"
   mtu           = 1500
@@ -40,7 +73,7 @@ resource "hcx_network_profile" "net_management" {
 
 
 resource "hcx_network_profile" "net_uplink" {
-  vcenter       = hcx_site_pairing.site1.local_vc
+  vcenter       = hcx_site_pairing.vmc.local_vc
   network_name  = "HCX-Uplink-RegionA01"
   name          = "HCX-Uplink-RegionA01-profile"
   mtu           = 1600
@@ -58,7 +91,7 @@ resource "hcx_network_profile" "net_uplink" {
 }
 
 resource "hcx_network_profile" "net_vmotion" {
-  vcenter       = hcx_site_pairing.site1.local_vc
+  vcenter       = hcx_site_pairing.vmc.local_vc
   network_name  = "HCX-vMotion-RegionA01"
   name          = "HCX-vMotion-RegionA01-profile"
   mtu           = 1500
@@ -116,9 +149,9 @@ resource "hcx_compute_profile" "compute_profile_1" {
 
 resource "hcx_service_mesh" "service_mesh_1" {
   name                            = "sm1"
-  site_pairing                    = hcx_site_pairing.site1
+  site_pairing                    = hcx_site_pairing.vmc
   local_compute_profile           = hcx_compute_profile.compute_profile_1.name
-  remote_compute_profile          = "Compute-RegionB01"
+  remote_compute_profile          = "ComputeProfile(vcenter)"
 
   app_path_resiliency_enabled     = false
   tcp_flow_conditioning_enabled   = false
@@ -147,14 +180,5 @@ resource "hcx_service_mesh" "service_mesh_1" {
 
 }
 
-resource "hcx_l2_extension" "l2_extension_1" {
-  site_pairing                    = hcx_site_pairing.site1
-  service_mesh_name               = hcx_service_mesh.service_mesh_1.name
-  source_network                  = "VM-RegionA01-vDS-COMP"
 
-  destination_t1                  = "T1-GW"
-  gateway                         = "2.2.2.2"
-  netmask                         = "255.255.255.0"
-
-}
-
+```
