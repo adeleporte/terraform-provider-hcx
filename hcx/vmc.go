@@ -47,20 +47,11 @@ type DeactivateHcxOnSDDCResults struct {
 	JobID string `json:"jobId"`
 }
 
-// Authenticate
-
-// Get SDDCs
-
-// GET to https://connect.hcx.vmware.com/provider/csp/consumer/api/sddcs
-
-// POST to https://connect.hcx.vmware.com/provider/csp/consumer/api/sddcs/SDDCID?action=activate (or desactivate)
-
 func VmcAuthenticate(token string) (string, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
-		// Default Hashicups URL
-		HostURL: "https://console.cloud.vmware.com/csp/gateway/am/api",
+		HostURL:    "https://console.cloud.vmware.com/csp/gateway/am/api",
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/auth/api-tokens/authorize?refresh_token=%s", c.HostURL, token), nil)
@@ -90,8 +81,7 @@ func HcxCloudAuthenticate(access_token string) (string, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
-		// Default Hashicups URL
-		HostURL: "https://connect.hcx.vmware.com/provider/csp",
+		HostURL:    "https://connect.hcx.vmware.com/provider/csp",
 	}
 
 	body := HcxCloudAuthorizationBody{
@@ -125,9 +115,8 @@ func GetSddc(hcx_auth, sddc_name string) (SDDC, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
-		// Default Hashicups URL
-		HostURL: "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:   hcx_auth,
+		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
+		Token:      hcx_auth,
 	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/sddcs", c.HostURL), nil)
@@ -165,9 +154,8 @@ func ActivateHcxOnSDDC(hcx_auth, sddc_id string) (ActivateHcxOnSDDCResults, erro
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
-		// Default Hashicups URL
-		HostURL: "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:   hcx_auth,
+		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
+		Token:      hcx_auth,
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/sddcs/%s?action=activate", c.HostURL, sddc_id), nil)
@@ -198,9 +186,8 @@ func DeactivateHcxOnSDDC(hcx_auth, sddc_id string) (DeactivateHcxOnSDDCResults, 
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
-		// Default Hashicups URL
-		HostURL: "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:   hcx_auth,
+		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
+		Token:      hcx_auth,
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/sddcs/%s?action=deactivate", c.HostURL, sddc_id), nil)
