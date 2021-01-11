@@ -21,7 +21,6 @@ func Provider() *schema.Provider {
 			"username": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_USER", nil),
 			},
 			"password": &schema.Schema{
@@ -29,6 +28,17 @@ func Provider() *schema.Provider {
 				Required:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_PASSWORD", nil),
+			},
+			"admin_username": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("HCX_ADMIN_USER", nil),
+			},
+			"admin_password": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("HCX_ADMIN_PASSWORD", nil),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -38,6 +48,10 @@ func Provider() *schema.Provider {
 			"hcx_service_mesh":    resourceServiceMesh(),
 			"hcx_l2_extension":    resourceL2Extension(),
 			"hcx_vcenter":         resourcevCenter(),
+			"hcx_sso":             resourceSSO(),
+			"hcx_activation":      resourceActivation(),
+			"hcx_rolemapping":     resourceRoleMapping(),
+			"hcx_location":        resourceLocation(),
 			"hcx_vmc":             resourceVmc(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -53,9 +67,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	hcxurl := d.Get("hcx").(string)
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
+	adminusername := d.Get("admin_username").(string)
+	adminpassword := d.Get("admin_password").(string)
 
 	if hcxurl != "" {
-		c, err := hcx.NewClient(&hcxurl, &username, &password)
+		c, err := hcx.NewClient(&hcxurl, &username, &password, &adminusername, &adminpassword)
 		//c := &http.Client{Timeout: 10 * time.Second}
 
 		if err != nil {

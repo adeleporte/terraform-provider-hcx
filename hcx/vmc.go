@@ -59,7 +59,7 @@ func VmcAuthenticate(token string) (string, error) {
 		return "", err
 	}
 
-	_, r, err := c.doRequest(req)
+	_, r, err := c.doVmcRequest(req)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +96,7 @@ func HcxCloudAuthenticate(access_token string) (string, error) {
 		return "", err
 	}
 
-	resp, _, err := c.doRequest(req)
+	resp, _, err := c.doVmcRequest(req)
 	if err != nil {
 		return "", err
 	}
@@ -124,7 +124,7 @@ func GetSddc(hcx_auth, sddc_name string) (SDDC, error) {
 		return SDDC{}, err
 	}
 
-	_, r, err := c.doRequest(req)
+	_, r, err := c.doVmcRequest(req)
 	if err != nil {
 		return SDDC{}, err
 	}
@@ -163,7 +163,7 @@ func ActivateHcxOnSDDC(hcx_auth, sddc_id string) (ActivateHcxOnSDDCResults, erro
 		return resp, err
 	}
 
-	_, r, err := c.doRequest(req)
+	_, r, err := c.doVmcRequest(req)
 	if err != nil {
 		return resp, err
 	}
@@ -195,7 +195,7 @@ func DeactivateHcxOnSDDC(hcx_auth, sddc_id string) (DeactivateHcxOnSDDCResults, 
 		return resp, err
 	}
 
-	_, r, err := c.doRequest(req)
+	_, r, err := c.doVmcRequest(req)
 	if err != nil {
 		return resp, err
 	}

@@ -83,6 +83,7 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 		},
 	}
 
+	//time.Sleep(10 * time.Second)
 	res, err := hcx.InsertSitePairing(client, body)
 
 	if err != nil {
@@ -113,9 +114,13 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	if second_try {
 		res, err = hcx.InsertSitePairing(client, body)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	// Wait for job completion
+	count := 0
 	for {
 		jr, err := hcx.GetJobResult(client, res.Data.JobID)
 		if err != nil {
@@ -125,7 +130,44 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 		if jr.IsDone {
 			break
 		}
-		time.Sleep(5 * time.Second)
+
+		if jr.DidFail {
+			return diag.Errorf("Site pairing Job did failed")
+		}
+		time.Sleep(10 * time.Second)
+		count = count + 1
+		if count > 5 {
+			break
+		}
+	}
+
+	if count > 5 {
+		res, err = hcx.InsertSitePairing(client, body)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Wait for job completion
+		count = 0
+		for {
+			jr, err := hcx.GetJobResult(client, res.Data.JobID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			if jr.IsDone {
+				break
+			}
+
+			if jr.DidFail {
+				return diag.Errorf("Site pairing Job did failed")
+			}
+			time.Sleep(10 * time.Second)
+			count = count + 1
+			if count > 5 {
+				break
+			}
+		}
 	}
 
 	d.SetId(res.Data.JobID)

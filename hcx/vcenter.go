@@ -23,9 +23,15 @@ type InsertvCenterDataItemConfig struct {
 	URL      string `json:"url"`
 	Username string `json:"userName"`
 	Password string `json:"password"`
+	Vcuuid   string `json:"vcuuid,omitempty"`
+	UUID     string `json:"UUID,omitempty"`
 }
 
 type InsertvCenterResult struct {
+	InsertvCenterData InsertvCenterData `json:"data"`
+}
+
+type DeletevCenterResult struct {
 	InsertvCenterData InsertvCenterData `json:"data"`
 }
 
@@ -44,7 +50,35 @@ func InsertvCenter(c *Client, body InsertvCenterBody) (InsertvCenterResult, erro
 	}
 
 	// Send the request
-	_, r, err := c.doRequest(req)
+	_, r, err := c.doAdminRequest(req)
+	if err != nil {
+		fmt.Println(err)
+		return resp, err
+	}
+
+	// parse response body
+	err = json.Unmarshal(r, &resp)
+	if err != nil {
+		fmt.Println(err)
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+// DeletevCenter ...
+func DeletevCenter(c *Client, vCenterUUID string) (DeletevCenterResult, error) {
+
+	resp := DeletevCenterResult{}
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s:9443/api/admin/global/config/vcenter/%s", c.HostURL, vCenterUUID), nil)
+	if err != nil {
+		fmt.Println(err)
+		return resp, err
+	}
+
+	// Send the request
+	_, r, err := c.doAdminRequest(req)
 	if err != nil {
 		fmt.Println(err)
 		return resp, err

@@ -23,9 +23,13 @@ terraform {
 }
 
 provider hcx {
-    hcx         = "https://192.168.110.70"
-    username    = "administrator@vsphere.local"
-    password    = "VMware1!"
+    hcx             = "https://172.17.9.10"
+
+    admin_username  = "admin"
+    admin_password  = "VMware1!VMware1!"
+
+    username        = "administrator@vsphere.local"
+    password        = "VMware1!"
 }
 
 // Variables definitions
@@ -36,10 +40,53 @@ variable "hcx_vmc_vcenter_password" {
 
 // Provider config
 provider hcx {
-    hcx         = "https://hcx-connector-01a"
-    username    = "administrator@vsphere.local"
-    password    = "VMware1!"
+    hcx             = "https://172.17.9.10"
+
+    admin_username  = "admin"
+    admin_password  = "VMware1!VMware1!"
+
+    username        = "administrator@cpod-vcn.az-fkd.cloud-garage.net"
+    password        = "changeme"
 }
+
+resource "hcx_vcenter" "vcenter" {
+    url         = "https://172.17.9.3"
+    username    = "administrator@cpod-vcn.az-fkd.cloud-garage.net"
+    password    = "changeme"
+
+    depends_on  = [hcx_activation.activation]
+}
+
+resource "hcx_sso" "sso" {
+    vcenter     = hcx_vcenter.vcenter.id
+    url         = "https://172.17.9.3"
+}
+
+
+resource "hcx_rolemapping" "rolemapping" {
+    sso = hcx_sso.sso.id
+
+    admin {
+      user_group = "cpod-vcn.az-fkd.cloud-garage.net\\Administrators"
+    }
+
+    admin {
+      user_group = "cpod-vcn.az-fkd.cloud-garage.net\\Administrators"
+    }
+
+    enterprise {
+      user_group = "cpod-vcn.az-fkd.cloud-garage.net\\Administrators"
+    }
+}
+
+resource "hcx_location" "location" {
+    city        = "Paris"
+    country     = "France"
+    province    = "Ile-de-France"
+    latitude    = 48.86669293
+    longitude   = 2.333335326
+}
+
 
 
 // Datasources and Resources
@@ -52,6 +99,8 @@ resource "hcx_site_pairing" "vmc" {
     url         = hcx_vmc.vmc_nico.cloud_url
     username    = "cloudadmin@vmc.local"
     password    = var.vmc_vcenter_password
+
+    depends_on  = [hcx_rolemapping.rolemapping]
 }
 
 resource "hcx_network_profile" "net_management" {

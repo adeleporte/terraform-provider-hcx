@@ -3,8 +3,10 @@ package hcx
 import (
 	"crypto/tls"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -12,11 +14,14 @@ import (
 
 // Client -
 type Client struct {
-	HostURL       string
-	HTTPClient    *http.Client
-	Token         string
-	AdminUsername string
-	AdminPassword string
+	HostURL         string
+	HTTPClient      *http.Client
+	Token           string
+	AdminUsername   string
+	AdminPassword   string
+	Username        string
+	Password        string
+	IsAuthenticated bool
 }
 
 // AuthStruct -
@@ -46,45 +51,182 @@ type enterprise_get_object_groups struct {
 	Type string `json:"type"`
 }
 
-// NewClient -
-func NewClient(hcx, username *string, password *string) (*Client, error) {
-	c := Client{
-		HTTPClient: &http.Client{Timeout: 60 * time.Second},
-		// Default Hashicups URL
-		HostURL: *hcx,
+type Content struct {
+	Strings []string `xml:"string"`
+}
+
+type Entries struct {
+	Entry []Content `xml:"entry"`
+}
+
+// HCX Authentication
+func (c *Client) HcxConnectorAuthenticate() error {
+
+	rb, err := json.Marshal(AuthStruct{
+		Username: c.Username,
+		Password: c.Password,
+	})
+	if err != nil {
+		return err
 	}
 
-	if (hcx != nil) && (username != nil) && (password != nil) {
+	// authenticate
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/hybridity/api/sessions", c.HostURL), strings.NewReader(string(rb)))
+	if err != nil {
+		return err
+	}
 
-		// form request body
-		rb, err := json.Marshal(AuthStruct{
-			Username: *username,
-			Password: *password,
-		})
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+	var resp *http.Response
+	for {
+		resp, err = c.HTTPClient.Do(req)
 		if err != nil {
-			return nil, err
+			// Hum...let's wait a bit and try again
+			time.Sleep(180 * time.Second)
+			resp, err = c.HTTPClient.Do(req)
+
+			if err != nil {
+				return fmt.Errorf("Unable to authenticate. Check vCenter User / SSO configuration. Error: %s", err.Error())
+			}
+
 		}
 
-		// authenticate
-		req, err := http.NewRequest("POST", fmt.Sprintf("%s/hybridity/api/sessions", c.HostURL), strings.NewReader(string(rb)))
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		resp, _, err := c.doRequest(req)
-		if err != nil {
-			return nil, err
+		if resp.StatusCode == http.StatusOK {
+			break
 		}
 
-		// parse response header
-		c.Token = resp.Header.Get("x-hm-authorization")
+		if resp.StatusCode == http.StatusAccepted {
+			break
+		}
 
+		// Check if SSO is ready
+		var xmlmessage Entries
+		xml.Unmarshal(body, &xmlmessage)
+
+		certificate_pb := false
+		for _, j := range xmlmessage.Entry {
+			if j.Strings[0] == "message" {
+				if j.Strings[1] == "'Trusted root certificates' value should not be empty" {
+					certificate_pb = true
+					log.Println("Certificate error")
+				}
+			}
+		}
+
+		if !certificate_pb {
+			return fmt.Errorf("body: %s", body)
+		}
+
+		time.Sleep(10 * time.Second)
+
+	}
+
+	// parse response header
+	c.Token = resp.Header.Get("x-hm-authorization")
+
+	return nil
+
+}
+
+// NewClient -
+func NewClient(hcx, username *string, password *string, adminusername *string, adminpassword *string) (*Client, error) {
+	c := Client{
+		HTTPClient:      &http.Client{Timeout: 10 * time.Second},
+		HostURL:         *hcx,
+		Username:        *username,
+		Password:        *password,
+		AdminUsername:   *adminusername,
+		AdminPassword:   *adminpassword,
+		IsAuthenticated: false,
 	}
 
 	return &c, nil
 }
 
 func (c *Client) doRequest(req *http.Request) (*http.Response, []byte, error) {
+
+	if !c.IsAuthenticated {
+		err := c.HcxConnectorAuthenticate()
+
+		if err != nil {
+			return nil, nil, err
+		}
+		c.IsAuthenticated = true
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-hm-authorization", fmt.Sprintf("%s", c.Token))
+
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		if res.StatusCode != http.StatusAccepted {
+			return nil, nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
+		}
+	}
+
+	return res, body, err
+}
+
+func (c *Client) doAdminRequest(req *http.Request) (*http.Response, []byte, error) {
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	c.HTTPClient.Timeout = 300 * time.Second
+
+	if (c.AdminUsername == "") || (c.AdminPassword == "") {
+		return nil, nil, fmt.Errorf("Admin Username or Password Empty")
+	}
+
+	req.SetBasicAuth(c.AdminUsername, c.AdminPassword)
+
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		if res.StatusCode != http.StatusNoContent {
+			if res.StatusCode != http.StatusAccepted {
+				return nil, nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
+			}
+		}
+	}
+
+	return res, body, err
+}
+
+func (c *Client) doVmcRequest(req *http.Request) (*http.Response, []byte, error) {
+
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -112,30 +254,4 @@ func (c *Client) doRequest(req *http.Request) (*http.Response, []byte, error) {
 	}
 
 	return res, body, err
-}
-
-// DeepCopy ...
-func DeepCopy(src map[string]interface{}) (map[string]interface{}, error) {
-
-	var dst map[string]interface{}
-
-	if src == nil {
-		fmt.Println("Error src")
-		return nil, fmt.Errorf("src cannot be nil")
-	}
-
-	bytes, err := json.Marshal(src)
-
-	if err != nil {
-		return nil, fmt.Errorf("Unable to marshal src: %s", err)
-	}
-	err = json.Unmarshal(bytes, &dst)
-
-	if err != nil {
-		fmt.Println("Error unmarshal")
-		fmt.Println(err)
-		return nil, fmt.Errorf("Unable to unmarshal into dst: %s", err)
-	}
-	return dst, nil
-
 }

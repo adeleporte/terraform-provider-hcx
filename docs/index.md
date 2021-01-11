@@ -62,6 +62,10 @@ terraform {
 
 provider "hcx" {
   hcx       = "https://192.168.110.70"
+
+  admin_username  = "admin"
+  admin_password  = "changeme"
+
   username  = "administrator@corp.local"
   password  = "changeme"
 }
@@ -107,6 +111,9 @@ match.
 
 In order to use the HCX Terraform provider you must first configure the provider to communicate with the HCX Connector. The HCX Connector is deployed at source (the cloud instance/the destination private cloud runs HCX Cloud).
 
+Admin credentials are related to appliance configuration (appliance management on port 9443).
+Normal credentials depends of the vCenter/SSO configuration made on the appliance.
+
 
 
 ## Example of Provider Configuration
@@ -114,6 +121,10 @@ In order to use the HCX Terraform provider you must first configure the provider
 ```hcl
 provider "hcx" {
   hcx       = "https://192.168.110.70"
+
+  admin_username  = "admin"
+  admin_password  = "changeme"
+
   username  = "administrator@corp.local"
   password  = "changeme"
 }

@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"time"
+
+	b64 "encoding/base64"
 
 	hcx "github.com/adeleporte/terraform-provider-hcx/hcx"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,7 +49,7 @@ func resourcevCenterCreate(ctx context.Context, d *schema.ResourceData, m interf
 				hcx.InsertvCenterDataItem{
 					Config: hcx.InsertvCenterDataItemConfig{
 						Username: username,
-						Password: password,
+						Password: b64.StdEncoding.EncodeToString([]byte(password)),
 						URL:      url,
 					},
 				},
@@ -60,7 +63,40 @@ func resourcevCenterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	d.SetId(res.InsertvCenterData.Items[0].Config.URL)
+	d.SetId(res.InsertvCenterData.Items[0].Config.UUID)
+
+	// Restart App Deamon
+	hcx.AppEngineStop(client)
+
+	// Wait for App Deamon to be stopped
+	for {
+		jr, err := hcx.GetAppEngineStatus(client)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if jr.Result == "STOPPED" {
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+	hcx.AppEngineStart(client)
+
+	// Wait for App Deamon to be started
+	for {
+		jr, err := hcx.GetAppEngineStatus(client)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if jr.Result == "RUNNING" {
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	// Seems that we need to wait a bit
+	time.Sleep(60 * time.Second)
 
 	return resourcevCenterRead(ctx, d, m)
 }
@@ -78,6 +114,10 @@ func resourcevCenterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourcevCenterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	client := m.(*hcx.Client)
+
+	hcx.DeletevCenter(client, d.Id())
 
 	return diags
 }
