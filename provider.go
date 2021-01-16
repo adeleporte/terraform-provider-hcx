@@ -20,12 +20,12 @@ func Provider() *schema.Provider {
 			},
 			"username": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_USER", nil),
 			},
 			"password": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_PASSWORD", nil),
 			},
