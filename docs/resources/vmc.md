@@ -24,7 +24,8 @@ resource "hcx_site_pairing" "vmc" {
 
 ## Argument Reference
 
-* `sddc_name` - (Required) Name of the SDDC.
+* `sddc_name` - (Optional) Name of the SDDC. If not specified, sddc_id must be set.
+* `sddc_id` - (Optional) ID of the SDDC. If not specified, sddc_name must be set.
 * `token` - (Required) VMware Cloud Service API Token. Generated from the VMware Cloud Services Console / My account / API Tokens. Environment variable VMC_API_TOKEN can be used to avoid setting the token in the code.
 
 

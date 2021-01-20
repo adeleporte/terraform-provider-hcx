@@ -111,7 +111,7 @@ func HcxCloudAuthenticate(access_token string) (string, error) {
 
 }
 
-func GetSddc(hcx_auth, sddc_name string) (SDDC, error) {
+func GetSddcByName(hcx_auth, sddc_name string) (SDDC, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
@@ -139,6 +139,43 @@ func GetSddc(hcx_auth, sddc_name string) (SDDC, error) {
 
 	for _, j := range resp.SDDCs {
 		if j.Name == sddc_name {
+			return j, nil
+		}
+	}
+
+	// parse response header
+	return SDDC{}, errors.New("cant find the sddc")
+
+}
+
+func GetSddcByID(hcx_auth, sddcID string) (SDDC, error) {
+
+	c := Client{
+		HTTPClient: &http.Client{Timeout: 60 * time.Second},
+		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
+		Token:      hcx_auth,
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/sddcs", c.HostURL), nil)
+	if err != nil {
+		return SDDC{}, err
+	}
+
+	_, r, err := c.doVmcRequest(req)
+	if err != nil {
+		return SDDC{}, err
+	}
+
+	resp := GetSddcsResults{}
+	// parse response body
+	err = json.Unmarshal(r, &resp)
+	if err != nil {
+		fmt.Println(err)
+		return SDDC{}, err
+	}
+
+	for _, j := range resp.SDDCs {
+		if j.ID == sddcID {
 			return j, nil
 		}
 	}

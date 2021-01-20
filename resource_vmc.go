@@ -23,9 +23,13 @@ func resourceVmc() *schema.Resource {
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("VMC_API_TOKEN", nil),
 			},
+			"sddc_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"sddc_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"cloud_url": &schema.Schema{
 				Type:     schema.TypeString,
@@ -49,6 +53,11 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	token := d.Get("token").(string)
 	sddc_name := d.Get("sddc_name").(string)
+	sddcID := d.Get("sddc_id").(string)
+
+	if sddc_name == "" && sddcID == "" {
+		return diag.Errorf("SDDC name or Id must be specified")
+	}
 
 	// Authenticate with VMware Cloud Services
 	access_token, err := hcx.VmcAuthenticate(token)
@@ -61,7 +70,13 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	sddc, err := hcx.GetSddc(hcx_auth, sddc_name)
+	var sddc hcx.SDDC
+	if sddcID != "" {
+		sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+	} else {
+		sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+	}
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -79,7 +94,11 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	// Wait for task to be completed
 	for {
-		sddc, err := hcx.GetSddc(hcx_auth, sddc_name)
+		if sddcID != "" {
+			sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+		} else {
+			sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+		}
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -103,6 +122,11 @@ func resourceVmcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	token := d.Get("token").(string)
 	sddc_name := d.Get("sddc_name").(string)
+	sddcID := d.Get("sddc_id").(string)
+
+	if sddc_name == "" && sddcID == "" {
+		return diag.Errorf("SDDC name or Id must be specified")
+	}
 
 	// Authenticate with VMware Cloud Services
 	access_token, err := hcx.VmcAuthenticate(token)
@@ -115,7 +139,12 @@ func resourceVmcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	sddc, err := hcx.GetSddc(hcx_auth, sddc_name)
+	var sddc hcx.SDDC
+	if sddcID != "" {
+		sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+	} else {
+		sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,6 +167,7 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 
 	token := d.Get("token").(string)
 	sddc_name := d.Get("sddc_name").(string)
+	sddcID := d.Get("sddc_id").(string)
 
 	// Authenticate with VMware Cloud Services
 	access_token, err := hcx.VmcAuthenticate(token)
@@ -150,7 +180,12 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	sddc, err := hcx.GetSddc(hcx_auth, sddc_name)
+	var sddc hcx.SDDC
+	if sddcID != "" {
+		sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+	} else {
+		sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,7 +198,12 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 
 	// Wait for task to be completed
 	for {
-		sddc, err := hcx.GetSddc(hcx_auth, sddc_name)
+		var sddc hcx.SDDC
+		if sddcID != "" {
+			sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+		} else {
+			sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+		}
 		if err != nil {
 			return diag.FromErr(err)
 		}
