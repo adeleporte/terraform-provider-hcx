@@ -129,3 +129,14 @@ provider "hcx" {
   password  = "changeme"
 }
 ```
+
+## Argument Reference
+
+* `hcx` - (Optional) URL of the HCX connector. If not specified, only hcx_vmc is usable by this provider.
+* `admin_username` - (Optional) Username of the HCX appliance. Only need if you want to manageable appliance setup.
+* `admin_password` - (Optional) Password of the HCX appliance. Only need if you want to manageable appliance setup.
+* `username` - (Optional) Username for HCX consumption. SSO/vSphere Role Mappings need to be set.
+* `password` - (Optional) Password for HCX consumption. SSO/vSphere Role Mappings need to be set.
+
+
+

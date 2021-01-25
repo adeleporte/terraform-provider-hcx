@@ -6,7 +6,6 @@ import (
 	hcx "github.com/adeleporte/terraform-provider-hcx/hcx"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	//	velo "github.com/adeleporte/terraform-provider-velocloud/velocloud"
 )
 
 // Provider -
@@ -15,7 +14,7 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"hcx": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_URL", nil),
 			},
 			"username": &schema.Schema{
@@ -81,5 +80,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return c, diags
 	}
 
-	return nil, diag.Errorf("Missing credentials")
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Warning,
+		Summary:  "No HCX Url provided",
+		Detail:   "Only hcx_vmc resource will be manageable",
+		//AttributePath: cty.Path{cty.GetAttrStep{Name: "hcx"}},
+	})
+
+	return nil, diags
 }
