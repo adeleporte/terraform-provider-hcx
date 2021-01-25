@@ -4,6 +4,7 @@ import (
 	"context"
 
 	hcx "github.com/adeleporte/terraform-provider-hcx/hcx"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -69,23 +70,21 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	adminusername := d.Get("admin_username").(string)
 	adminpassword := d.Get("admin_password").(string)
 
-	if hcxurl != "" {
-		c, err := hcx.NewClient(&hcxurl, &username, &password, &adminusername, &adminpassword)
-		//c := &http.Client{Timeout: 10 * time.Second}
+	c, err := hcx.NewClient(&hcxurl, &username, &password, &adminusername, &adminpassword)
+	//c := &http.Client{Timeout: 10 * time.Second}
 
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		return c, diags
+	if err != nil {
+		return nil, diag.FromErr(err)
 	}
 
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Warning,
-		Summary:  "No HCX Url provided",
-		Detail:   "Only hcx_vmc resource will be manageable",
-		//AttributePath: cty.Path{cty.GetAttrStep{Name: "hcx"}},
-	})
+	if hcxurl == "" {
+		diags = append(diags, diag.Diagnostic{
+			Severity:      diag.Warning,
+			Summary:       "No HCX Url provided",
+			Detail:        "Only hcx_vmc resource will be manageable",
+			AttributePath: cty.Path{cty.GetAttrStep{Name: "hcx"}},
+		})
+	}
 
-	return nil, diags
+	return c, diags
 }
