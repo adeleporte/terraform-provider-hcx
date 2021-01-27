@@ -87,11 +87,11 @@ func InsertServiceMesh(c *Client, body InsertServiceMeshBody) (InsertServiceMesh
 }
 
 // DeleteServiceMesh ...
-func DeleteServiceMesh(c *Client, serviceMeshID string) (DeleteServiceMeshResult, error) {
+func DeleteServiceMesh(c *Client, serviceMeshID string, force bool) (DeleteServiceMeshResult, error) {
 
 	resp := DeleteServiceMeshResult{}
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/hybridity/api/interconnect/serviceMesh/%s", c.HostURL, serviceMeshID), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/hybridity/api/interconnect/serviceMesh/%s?force=%v", c.HostURL, serviceMeshID, force), nil)
 	if err != nil {
 		fmt.Println(err)
 		return resp, err

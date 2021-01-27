@@ -47,6 +47,11 @@ func resourceServiceMesh() *schema.Resource {
 				Optional: true,
 				Default:  10000,
 			},
+			"force_delete": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"service": &schema.Schema{
 				Type:        schema.TypeList,
 				Description: "Rules description",
@@ -192,8 +197,9 @@ func resourceServiceMeshDelete(ctx context.Context, d *schema.ResourceData, m in
 	var diags diag.Diagnostics
 
 	client := m.(*hcx.Client)
+	force := d.Get("force_delete").(bool)
 
-	res, err := hcx.DeleteServiceMesh(client, d.Id())
+	res, err := hcx.DeleteServiceMesh(client, d.Id(), force)
 	if err != nil {
 		return diag.FromErr(err)
 	}
