@@ -16,31 +16,31 @@ func resourceLocation() *schema.Resource {
 		DeleteContext: resourceLocationDelete,
 
 		Schema: map[string]*schema.Schema{
-			"city": &schema.Schema{
+			"city": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
-			"country": &schema.Schema{
+			"country": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
-			"cityascii": &schema.Schema{
+			"cityascii": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"latitude": &schema.Schema{
+			"latitude": {
 				Type:     schema.TypeFloat,
 				Optional: true,
 				Default:  0,
 			},
-			"longitude": &schema.Schema{
+			"longitude": {
 				Type:     schema.TypeFloat,
 				Optional: true,
 				Default:  0,
 			},
-			"province": &schema.Schema{
+			"province": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",

@@ -8,42 +8,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceNetworkBacking() *schema.Resource {
+func dataSourceComputeProfile() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceNetworkBackingRead,
+		ReadContext: dataSourceComputeProfileRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"vcuuid": {
+			"vcenter": {
 				Type:     schema.TypeString,
 				Required: true,
-			},
-			"entityid": {
-				Type:     schema.TypeString,
-				Computed: true,
 			},
 		},
 	}
 }
 
-func dataSourceNetworkBackingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceComputeProfileRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*hcx.Client)
 
-	network := d.Get("name").(string)
-	vcuuid := d.Get("vcuuid").(string)
+	res, err := hcx.GetLocalCloudList(client)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	res, err := hcx.GetNetworkBacking(client, vcuuid, network)
+	network := d.Get("name").(string)
+
+	cp, err := hcx.GetComputeProfile(client, res.Data.Items[0].EndpointId, network)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(res.EntityID)
+	d.SetId(cp.ComputeProfileId)
 
 	return diags
 }

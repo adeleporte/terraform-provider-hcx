@@ -13,28 +13,28 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"hcx": &schema.Schema{
+			"hcx": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_URL", nil),
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_USER", nil),
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_PASSWORD", nil),
 			},
-			"admin_username": &schema.Schema{
+			"admin_username": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_ADMIN_USER", nil),
 			},
-			"admin_password": &schema.Schema{
+			"admin_password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
@@ -56,6 +56,7 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"hcx_network_backing": dataSourceNetworkBacking(),
+			"hcx_compute_profile": dataSourceComputeProfile(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

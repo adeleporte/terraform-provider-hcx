@@ -8,15 +8,25 @@ import (
 	"net/http"
 )
 
-type InsertNetworkProfileBody struct {
+type NetworkProfileBody struct {
 	Backings        []Backing `json:"backings"`
 	Description     string    `json:"description"`
-	Enterprise      string    `json:"enterprise"`
+	Organization    string    `json:"organization,omitempty"`
 	IPScopes        []IPScope `json:"ipScopes"`
 	MTU             int       `json:"mtu"`
 	Name            string    `json:"name"`
 	L3TenantManaged bool      `json:"l3TenantManaged"`
 	OwnedBySystem   bool      `json:"ownedBySystem"`
+	ObjectId        string    `json:"objectId,omitempty"`
+}
+
+type Filter struct {
+	OwnedBySystem        bool `json:"ownedBySystem"`
+	AllowTrunkInterfaces bool `json:"allowTrunkInterfaces"`
+}
+
+type NetworkFilter struct {
+	Filter Filter `json:"filter"`
 }
 
 type Backing struct {
@@ -24,6 +34,7 @@ type Backing struct {
 	BackingName         string `json:"backingName"`
 	Type                string `json:"type"`
 	VCenterInstanceUuid string `json:"vCenterInstanceUuid"`
+	VCenterName         string `json:"vCenterName,omitempty"`
 }
 
 type IPScope struct {
@@ -32,24 +43,13 @@ type IPScope struct {
 	PrefixLength    int              `json:"prefixLength"`
 	PrimaryDns      string           `json:"primaryDns,omitempty"`
 	SecondaryDns    string           `json:"secondaryDns,omitempty"`
-	NetworkIpRanges []NetworkIpRange `json:"networkIpRanges"`
+	NetworkIpRanges []NetworkIpRange `json:"networkIpRanges,omitempty"`
+	PoolID          string           `json:"poolId"`
 }
 
 type NetworkIpRange struct {
 	EndAddress   string `json:"endAddress"`
 	StartAddress string `json:"startAddress"`
-}
-
-type GetNetworkProfileResult struct {
-	Backings        []Backing `json:"backings"`
-	Description     string    `json:"description"`
-	Enterprise      string    `json:"enterprise"`
-	IPScopes        []IPScope `json:"ipScopes"`
-	MTU             int       `json:"mtu"`
-	Name            string    `json:"name"`
-	L3TenantManaged bool      `json:"l3TenantManaged"`
-	OwnedBySystem   bool      `json:"ownedBySystem"`
-	ObjectId        string    `json:"objectId"`
 }
 
 type NetworkProfileResult struct {
@@ -64,20 +64,8 @@ type NetworkProfileData struct {
 	ObjectId string `json:"objectId"`
 }
 
-type UpdateNetworkProfileBody struct {
-	Backings        []Backing `json:"backings"`
-	Description     string    `json:"description"`
-	Enterprise      string    `json:"enterprise"`
-	IPScopes        []IPScope `json:"ipScopes"`
-	MTU             int       `json:"mtu"`
-	Name            string    `json:"name"`
-	L3TenantManaged bool      `json:"l3TenantManaged"`
-	OwnedBySystem   bool      `json:"ownedBySystem"`
-	ObjectId        string    `json:"objectId"`
-}
-
 // InsertNetworkProfile ...
-func InsertNetworkProfile(c *Client, body InsertNetworkProfileBody) (NetworkProfileResult, error) {
+func InsertNetworkProfile(c *Client, body NetworkProfileBody) (NetworkProfileResult, error) {
 
 	resp := NetworkProfileResult{}
 
@@ -108,37 +96,46 @@ func InsertNetworkProfile(c *Client, body InsertNetworkProfileBody) (NetworkProf
 }
 
 // GetNetworkProfile ...
-func GetNetworkProfile(c *Client, name string) (string, error) {
+func GetNetworkProfile(c *Client, name string) (NetworkProfileBody, error) {
 
-	resp := []GetNetworkProfileResult{}
+	resp := []NetworkProfileBody{}
+	body := NetworkFilter{
+		Filter: Filter{
+			OwnedBySystem:        true,
+			AllowTrunkInterfaces: false,
+		},
+	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/hybridity/api/networks", c.HostURL), nil)
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(body)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/hybridity/api/networks?action=queryIpUsage", c.HostURL), buf)
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return NetworkProfileBody{}, err
 	}
 
 	// Send the request
 	_, r, err := c.doRequest(req)
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return NetworkProfileBody{}, err
 	}
 
 	// parse response body
 	err = json.Unmarshal(r, &resp)
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return NetworkProfileBody{}, err
 	}
 
 	for _, j := range resp {
 		if j.Name == name {
-			return j.ObjectId, nil
+			return j, nil
 		}
 	}
 
-	return "", errors.New("cannot find network profile")
+	return NetworkProfileBody{}, errors.New("cannot find network profile")
 }
 
 // DeleteNetworkProfile ...
@@ -170,7 +167,7 @@ func DeleteNetworkProfile(c *Client, networkID string) (NetworkProfileResult, er
 }
 
 // UpdateNetworkProfile ...
-func UpdateNetworkProfile(c *Client, body UpdateNetworkProfileBody) (NetworkProfileResult, error) {
+func UpdateNetworkProfile(c *Client, body NetworkProfileBody) (NetworkProfileResult, error) {
 
 	resp := NetworkProfileResult{}
 

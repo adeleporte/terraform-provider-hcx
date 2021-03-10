@@ -18,48 +18,48 @@ func resourceSitePairing() *schema.Resource {
 		DeleteContext: resourceSitePairingDelete,
 
 		Schema: map[string]*schema.Schema{
-			"url": &schema.Schema{
+			"url": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:      schema.TypeString,
 				Required:  true,
 				Sensitive: true,
 			},
-			"local_vc": &schema.Schema{
+			"local_vc": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"local_endpoint_id": &schema.Schema{
+			"local_endpoint_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"local_name": &schema.Schema{
+			"local_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"remote_name": &schema.Schema{
+			"remote_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"remote_endpoint_type": &schema.Schema{
+			"remote_endpoint_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"remote_resource_id": &schema.Schema{
+			"remote_resource_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"remote_resource_name": &schema.Schema{
+			"remote_resource_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"remote_resource_type": &schema.Schema{
+			"remote_resource_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

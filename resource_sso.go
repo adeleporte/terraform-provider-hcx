@@ -16,11 +16,11 @@ func resourceSSO() *schema.Resource {
 		DeleteContext: resourceSSODelete,
 
 		Schema: map[string]*schema.Schema{
-			"url": &schema.Schema{
+			"url": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"vcenter": &schema.Schema{
+			"vcenter": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -37,7 +37,7 @@ func resourceSSOCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	body := hcx.InsertSSOBody{
 		Data: hcx.InsertSSOData{
 			Items: []hcx.InsertSSODataItem{
-				hcx.InsertSSODataItem{
+				{
 					Config: hcx.InsertSSODataItemConfig{
 						LookupServiceUrl: url,
 						ProviderType:     "PSC",
@@ -89,7 +89,7 @@ func resourceSSOUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	body := hcx.InsertSSOBody{
 		Data: hcx.InsertSSOData{
 			Items: []hcx.InsertSSODataItem{
-				hcx.InsertSSODataItem{
+				{
 					Config: hcx.InsertSSODataItemConfig{
 						LookupServiceUrl: url,
 						UUID:             d.Id(),

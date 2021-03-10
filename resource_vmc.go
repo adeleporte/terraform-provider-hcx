@@ -17,29 +17,29 @@ func resourceVmc() *schema.Resource {
 		DeleteContext: resourceVmcDelete,
 
 		Schema: map[string]*schema.Schema{
-			"token": &schema.Schema{
+			"token": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("VMC_API_TOKEN", nil),
 			},
-			"sddc_id": &schema.Schema{
+			"sddc_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"sddc_name": &schema.Schema{
+			"sddc_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"cloud_url": &schema.Schema{
+			"cloud_url": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"cloud_name": &schema.Schema{
+			"cloud_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"cloud_type": &schema.Schema{
+			"cloud_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

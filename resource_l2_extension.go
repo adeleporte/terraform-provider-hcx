@@ -19,28 +19,28 @@ func resourceL2Extension() *schema.Resource {
 		DeleteContext: resourceL2ExtensionDelete,
 
 		Schema: map[string]*schema.Schema{
-			"site_pairing": &schema.Schema{
+			"site_pairing": {
 				Type:     schema.TypeMap,
 				Required: true,
 			},
-			"service_mesh_name": &schema.Schema{
+			"service_mesh_name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"source_network": &schema.Schema{
+			"source_network": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"destination_t1": &schema.Schema{
+			"destination_t1": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"gateway": &schema.Schema{
+			"gateway": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  false,
 			},
-			"netmask": &schema.Schema{
+			"netmask": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  false,

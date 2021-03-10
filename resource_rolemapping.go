@@ -16,12 +16,12 @@ func resourceRoleMapping() *schema.Resource {
 		DeleteContext: resourceRoleMappingDelete,
 
 		Schema: map[string]*schema.Schema{
-			"admin": &schema.Schema{
+			"admin": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"user_group": &schema.Schema{
+						"user_group": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "vsphere.local\\Administrators",
@@ -29,12 +29,12 @@ func resourceRoleMapping() *schema.Resource {
 					},
 				},
 			},
-			"enterprise": &schema.Schema{
+			"enterprise": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"user_group": &schema.Schema{
+						"user_group": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
@@ -42,7 +42,7 @@ func resourceRoleMapping() *schema.Resource {
 					},
 				},
 			},
-			"sso": &schema.Schema{
+			"sso": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -81,11 +81,11 @@ func resourceRoleMappingUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	body := []hcx.RoleMapping{
-		hcx.RoleMapping{
+		{
 			Role:       "System Administrator",
 			UserGroups: admin_groups,
 		},
-		hcx.RoleMapping{
+		{
 			Role:       "Enterprise Administrator",
 			UserGroups: enterprise_groups,
 		},
@@ -110,11 +110,11 @@ func resourceRoleMappingDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	client := m.(*hcx.Client)
 	body := []hcx.RoleMapping{
-		hcx.RoleMapping{
+		{
 			Role:       "System Administrator",
 			UserGroups: []string{},
 		},
-		hcx.RoleMapping{
+		{
 			Role:       "Enterprise Administrator",
 			UserGroups: []string{},
 		},

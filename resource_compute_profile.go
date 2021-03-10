@@ -20,53 +20,53 @@ func resourceComputeProfile() *schema.Resource {
 		DeleteContext: resourceComputeProfileDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"datacenter": &schema.Schema{
+			"datacenter": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cluster": &schema.Schema{
+			"cluster": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"datastore": &schema.Schema{
+			"datastore": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
-			"management_network": &schema.Schema{
+			"management_network": {
 				Type:     schema.TypeMap,
 				Required: true,
 			},
-			"replication_network": &schema.Schema{
+			"replication_network": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Default:  "",
 			},
-			"uplink_network": &schema.Schema{
+			"uplink_network": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Default:  "",
 			},
-			"vmotion_network": &schema.Schema{
+			"vmotion_network": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Default:  "",
 			},
-			"dvs": &schema.Schema{
+			"dvs": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"service": &schema.Schema{
+			"service": {
 				Type:        schema.TypeList,
 				Description: "Rules description",
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
@@ -221,7 +221,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 	body := hcx.InsertComputeProfileBody{
 		Name:     name,
 		Services: services_from_schema,
-		Computes: []hcx.Compute{hcx.Compute{
+		Computes: []hcx.Compute{{
 			CmpId:   res.Entity_id,
 			CmpType: "VC",
 			CmpName: res.Name,
@@ -230,7 +230,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 			Type:    res.Children[0].EntityType,
 		}},
 		DeploymentContainers: hcx.DeploymentContainer{
-			Computes: []hcx.Compute{hcx.Compute{
+			Computes: []hcx.Compute{{
 				CmpId:   res.Entity_id,
 				CmpType: "VC",
 				CmpName: res.Name,
@@ -239,7 +239,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 				Type:    "ClusterComputeResource",
 			},
 			},
-			Storage: []hcx.Storage{hcx.Storage{
+			Storage: []hcx.Storage{{
 				CmpId:   res.Entity_id,
 				CmpType: "VC",
 				CmpName: res.Name,
@@ -249,7 +249,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 			}},
 		},
 		Networks: networks_list,
-		Switches: []hcx.Switch{hcx.Switch{
+		Switches: []hcx.Switch{{
 			CmpID:  res.Entity_id,
 			MaxMTU: dvs_from_api.MaxMtu,
 			ID:     dvs_from_api.ID,

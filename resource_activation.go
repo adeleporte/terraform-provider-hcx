@@ -16,12 +16,12 @@ func resourceActivation() *schema.Resource {
 		DeleteContext: resourceActivationDelete,
 
 		Schema: map[string]*schema.Schema{
-			"url": &schema.Schema{
+			"url": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "https://connect.hcx.vmware.com",
 			},
-			"activationkey": &schema.Schema{
+			"activationkey": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -39,7 +39,7 @@ func resourceActivationCreate(ctx context.Context, d *schema.ResourceData, m int
 	body := hcx.ActivateBody{
 		Data: hcx.ActivateData{
 			Items: []hcx.ActivateDataItem{
-				hcx.ActivateDataItem{
+				{
 					Config: hcx.ActivateDataItemConfig{
 						URL:           url,
 						ActivationKey: activationkey,

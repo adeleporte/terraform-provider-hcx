@@ -19,15 +19,15 @@ func resourcevCenter() *schema.Resource {
 		DeleteContext: resourcevCenterDelete,
 
 		Schema: map[string]*schema.Schema{
-			"url": &schema.Schema{
+			"url": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -46,7 +46,7 @@ func resourcevCenterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	body := hcx.InsertvCenterBody{
 		Data: hcx.InsertvCenterData{
 			Items: []hcx.InsertvCenterDataItem{
-				hcx.InsertvCenterDataItem{
+				{
 					Config: hcx.InsertvCenterDataItemConfig{
 						Username: username,
 						Password: b64.StdEncoding.EncodeToString([]byte(password)),

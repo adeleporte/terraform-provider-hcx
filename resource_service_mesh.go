@@ -20,52 +20,52 @@ func resourceServiceMesh() *schema.Resource {
 		DeleteContext: resourceServiceMeshDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"local_compute_profile": &schema.Schema{
+			"local_compute_profile": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"remote_compute_profile": &schema.Schema{
+			"remote_compute_profile": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"app_path_resiliency_enabled": &schema.Schema{
+			"app_path_resiliency_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
-			"tcp_flow_conditioning_enabled": &schema.Schema{
+			"tcp_flow_conditioning_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
-			"uplink_max_bandwidth": &schema.Schema{
+			"uplink_max_bandwidth": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  10000,
 			},
-			"force_delete": &schema.Schema{
+			"force_delete": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
-			"service": &schema.Schema{
+			"service": {
 				Type:        schema.TypeList,
 				Description: "Rules description",
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
 					},
 				},
 			},
-			"site_pairing": &schema.Schema{
+			"site_pairing": {
 				Type:     schema.TypeMap,
 				Required: true,
 			},
@@ -116,13 +116,13 @@ func resourceServiceMeshCreate(ctx context.Context, d *schema.ResourceData, m in
 	body := hcx.InsertServiceMeshBody{
 		Name: name,
 		ComputeProfiles: []hcx.ComputeProfile{
-			hcx.ComputeProfile{
+			{
 				EndpointId:         local_endpoint_id,
 				EndpointName:       local_endpoint_name,
 				ComputeProfileId:   local_compute_profile.ComputeProfileId,
 				ComputeProfileName: local_compute_profile.Name,
 			},
-			hcx.ComputeProfile{
+			{
 				EndpointId:         remote_endpoint_id,
 				EndpointName:       remote_endpoint_name,
 				ComputeProfileId:   remote_compute_profile.ComputeProfileId,
@@ -138,7 +138,7 @@ func resourceServiceMeshCreate(ctx context.Context, d *schema.ResourceData, m in
 		},
 		Services: services_from_schema,
 		SwitchPairCount: []hcx.SwitchPairCount{
-			hcx.SwitchPairCount{
+			{
 				Switches: []hcx.Switch{
 					local_compute_profile.Switches[0],
 					remote_compute_profile.Switches[0],
