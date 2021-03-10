@@ -109,8 +109,10 @@ resource "hcx_network_profile" "net_management" {
   name          = "HCX-Management-RegionA01-profile"
   mtu           = 1500
 
-  start_address   = "192.168.110.151"
-  end_address     = "192.168.110.155"
+  ip_range {
+    start_address   = "192.168.110.151"
+    end_address     = "192.168.110.155"
+  }
 
   gateway           = "192.168.110.1"
   prefix_length     = 24
@@ -127,10 +129,10 @@ resource "hcx_network_profile" "net_uplink" {
   name          = "HCX-Uplink-RegionA01-profile"
   mtu           = 1600
 
-
-  start_address   = "192.168.110.156"
-  end_address     = "192.168.110.160"
-
+  ip_range {
+    start_address   = "192.168.110.156"
+    end_address     = "192.168.110.160"
+  }
 
   gateway           = "192.168.110.1"
   prefix_length     = 24
@@ -145,9 +147,10 @@ resource "hcx_network_profile" "net_vmotion" {
   name          = "HCX-vMotion-RegionA01-profile"
   mtu           = 1500
 
-  start_address   = "10.10.30.151"
-  end_address     = "10.10.30.155"
-
+  ip_range {
+    start_address   = "10.10.30.151"
+    end_address     = "10.10.30.155"
+  }
 
   gateway           = ""
   prefix_length     = 24
@@ -164,10 +167,10 @@ resource "hcx_compute_profile" "compute_profile_1" {
   cluster               = "RegionA01-COMP01"
   datastore             = "RegionA01-ISCSI01-COMP01"
 
-  management_network    = hcx_network_profile.net_management
-  replication_network   = hcx_network_profile.net_management
-  uplink_network        = hcx_network_profile.net_uplink
-  vmotion_network       = hcx_network_profile.net_vmotion
+  management_network    = hcx_network_profile.net_management.id
+  replication_network   = hcx_network_profile.net_management.id
+  uplink_network        = hcx_network_profile.net_uplink.id
+  vmotion_network       = hcx_network_profile.net_vmotion.id
   dvs                   = "RegionA01-vDS-COMP"
 
   service {
