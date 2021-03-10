@@ -35,6 +35,7 @@ type Destination struct {
 
 type Features struct {
 	EgressOptimization bool `json:"egressOptimization"`
+	Mon                bool `json:"mobilityOptimizedNetworking"`
 }
 
 type SourceAppliance struct {

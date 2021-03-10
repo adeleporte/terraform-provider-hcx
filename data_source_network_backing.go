@@ -25,6 +25,11 @@ func dataSourceNetworkBacking() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"network_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "DistributedVirtualPortgroup",
+			},
 		},
 	}
 }
@@ -36,8 +41,9 @@ func dataSourceNetworkBackingRead(ctx context.Context, d *schema.ResourceData, m
 
 	network := d.Get("name").(string)
 	vcuuid := d.Get("vcuuid").(string)
+	network_type := d.Get("network_type").(string)
 
-	res, err := hcx.GetNetworkBacking(client, vcuuid, network)
+	res, err := hcx.GetNetworkBacking(client, vcuuid, network, network_type)
 
 	if err != nil {
 		return diag.FromErr(err)

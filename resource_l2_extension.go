@@ -23,13 +23,18 @@ func resourceL2Extension() *schema.Resource {
 				Type:     schema.TypeMap,
 				Required: true,
 			},
-			"service_mesh_name": {
+			"service_mesh_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 			"source_network": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"network_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "DistributedVirtualPortgroup",
 			},
 			"destination_t1": {
 				Type:     schema.TypeString,
@@ -44,6 +49,21 @@ func resourceL2Extension() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  false,
+			},
+			"mon": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+			"egress_optimization": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+			"appliance_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
 			},
 		},
 	}
@@ -70,14 +90,26 @@ func resourceL2ExtensionCreate(ctx context.Context, d *schema.ResourceData, m in
 	destination_resource_name := site_pairing["remote_resource_name"].(string)
 	destination_resource_type := site_pairing["remote_resource_type"].(string)
 
-	dvpg, err := hcx.GetNetworkBacking(client, vcGuid, source_network)
+	mon := d.Get("mon").(bool)
+	egress_optimization := d.Get("egress_optimization").(bool)
+
+	network_type := d.Get("network_type").(string)
+
+	service_mesh_id := d.Get("service_mesh_id").(string)
+
+	dvpg, err := hcx.GetNetworkBacking(client, site_pairing["local_endpoint_id"].(string), source_network, network_type)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	appliance, err := hcx.GetAppliance(client, site_pairing["local_endpoint_id"].(string))
-	if err != nil {
-		return diag.FromErr(err)
+	appliance_id := d.Get("appliance_id").(string)
+	if appliance_id == "" {
+		// GET THE FIRST APPLIANCE
+		appliance, err := hcx.GetAppliance(client, site_pairing["local_endpoint_id"].(string), service_mesh_id)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		appliance_id = appliance.ApplianceId
 	}
 
 	body := hcx.InsertL2ExtensionBody{
@@ -88,15 +120,16 @@ func resourceL2ExtensionCreate(ctx context.Context, d *schema.ResourceData, m in
 		},
 		Dns: []string{},
 		Features: hcx.Features{
-			EgressOptimization: false,
+			EgressOptimization: egress_optimization,
+			Mon:                mon,
 		},
 		SourceAppliance: hcx.SourceAppliance{
-			ApplianceId: appliance.ApplianceId,
+			ApplianceId: appliance_id,
 		},
 		SourceNetwork: hcx.SourceNetwork{
 			NetworkId:   dvpg.EntityID,
 			NetworkName: dvpg.Name,
-			NetworkType: "dvpg",
+			NetworkType: dvpg.EntityType,
 		},
 		VcGuid: vcGuid,
 		Destination: hcx.Destination{

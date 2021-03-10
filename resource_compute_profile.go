@@ -38,21 +38,21 @@ func resourceComputeProfile() *schema.Resource {
 				Default:  "",
 			},
 			"management_network": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
 				Required: true,
 			},
 			"replication_network": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
 			"uplink_network": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
 			"vmotion_network": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
@@ -132,16 +132,43 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Create network list with tags
-	management_network := d.Get("management_network").(map[string]interface{})
-	replication_network := d.Get("replication_network").(map[string]interface{})
-	uplink_network := d.Get("uplink_network").(map[string]interface{})
-	vmotion_network := d.Get("vmotion_network").(map[string]interface{})
+	management_network := d.Get("management_network").(string)
+	replication_network := d.Get("replication_network").(string)
+	uplink_network := d.Get("uplink_network").(string)
+	vmotion_network := d.Get("vmotion_network").(string)
 
 	networks_list := []hcx.Network{}
+	np, err := hcx.GetNetworkProfileById(client, management_network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	management_network_name := np.Name
+	management_network_id := np.ObjectId
+
+	np, err = hcx.GetNetworkProfileById(client, replication_network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	replication_network_name := np.Name
+	replication_network_id := np.ObjectId
+
+	np, err = hcx.GetNetworkProfileById(client, uplink_network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	uplink_network_name := np.Name
+	uplink_network_id := np.ObjectId
+
+	np, err = hcx.GetNetworkProfileById(client, vmotion_network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	vmotion_network_name := np.Name
+	vmotion_network_id := np.ObjectId
 
 	net_tmp := hcx.Network{
-		Name: management_network["name"].(string),
-		ID:   management_network["id"].(string),
+		Name: management_network_name,
+		ID:   management_network_id,
 		Tags: []string{"management"},
 		Status: hcx.Status{
 			State: "REALIZED",
@@ -152,7 +179,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 	found = false
 	index := 0
 	for i, j := range networks_list {
-		if j.Name == replication_network["name"].(string) {
+		if j.Name == replication_network_name {
 			found = true
 			index = i
 			break
@@ -162,8 +189,8 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 		networks_list[index].Tags = append(networks_list[index].Tags, "replication")
 	} else {
 		net_tmp := hcx.Network{
-			Name: replication_network["name"].(string),
-			ID:   replication_network["id"].(string),
+			Name: replication_network_name,
+			ID:   replication_network_id,
 			Tags: []string{"replication"},
 			Status: hcx.Status{
 				State: "REALIZED",
@@ -175,7 +202,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 	found = false
 	index = 0
 	for i, j := range networks_list {
-		if j.Name == uplink_network["name"].(string) {
+		if j.Name == uplink_network_name {
 			found = true
 			index = i
 			break
@@ -185,8 +212,8 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 		networks_list[index].Tags = append(networks_list[index].Tags, "uplink")
 	} else {
 		net_tmp := hcx.Network{
-			Name: uplink_network["name"].(string),
-			ID:   uplink_network["id"].(string),
+			Name: uplink_network_name,
+			ID:   uplink_network_id,
 			Tags: []string{"uplink"},
 			Status: hcx.Status{
 				State: "REALIZED",
@@ -198,7 +225,7 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 	found = false
 	index = 0
 	for i, j := range networks_list {
-		if j.Name == vmotion_network["name"].(string) {
+		if j.Name == vmotion_network_name {
 			found = true
 			index = i
 			break
@@ -208,8 +235,8 @@ func resourceComputeProfileCreate(ctx context.Context, d *schema.ResourceData, m
 		networks_list[index].Tags = append(networks_list[index].Tags, "vmotion")
 	} else {
 		net_tmp := hcx.Network{
-			Name: vmotion_network["name"].(string),
-			ID:   vmotion_network["id"].(string),
+			Name: vmotion_network_name,
+			ID:   vmotion_network_id,
 			Tags: []string{"vmotion"},
 			Status: hcx.Status{
 				State: "REALIZED",

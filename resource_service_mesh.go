@@ -69,6 +69,23 @@ func resourceServiceMesh() *schema.Resource {
 				Type:     schema.TypeMap,
 				Required: true,
 			},
+			"nb_appliances": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  1,
+			},
+			"appliances_id": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -113,6 +130,8 @@ func resourceServiceMeshCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	nb_appliances := d.Get("nb_appliances").(int)
+
 	body := hcx.InsertServiceMeshBody{
 		Name: name,
 		ComputeProfiles: []hcx.ComputeProfile{
@@ -143,7 +162,7 @@ func resourceServiceMeshCreate(ctx context.Context, d *schema.ResourceData, m in
 					local_compute_profile.Switches[0],
 					remote_compute_profile.Switches[0],
 				},
-				L2cApplianceCount: 1,
+				L2cApplianceCount: nb_appliances,
 			},
 		},
 	}
@@ -175,6 +194,21 @@ func resourceServiceMeshCreate(ctx context.Context, d *schema.ResourceData, m in
 
 		time.Sleep(5 * time.Second)
 	}
+
+	// Update Appliances ID
+	appliances, err := hcx.GetAppliances(client, site_pairing["local_endpoint_id"].(string), res2.Data.ServiceMeshId)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	tmp := []map[string]string{}
+
+	for _, j := range appliances {
+		a := map[string]string{}
+		a["id"] = j.ApplianceId
+		tmp = append(tmp, a)
+	}
+	d.Set("appliances_id", tmp)
 
 	d.SetId(res2.Data.ServiceMeshId)
 

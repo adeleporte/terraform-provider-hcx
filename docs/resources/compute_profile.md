@@ -15,10 +15,10 @@ resource "hcx_compute_profile" "compute_profile_1" {
   cluster               = "RegionA01-COMP01"
   datastore             = "RegionA01-ISCSI01-COMP01"
 
-  management_network    = hcx_network_profile.net_management
-  replication_network   = hcx_network_profile.net_management
-  uplink_network        = hcx_network_profile.net_uplink
-  vmotion_network       = hcx_network_profile.net_vmotion
+  management_network    = hcx_network_profile.net_management.id
+  replication_network   = hcx_network_profile.net_management.id
+  uplink_network        = hcx_network_profile.net_uplink.id
+  vmotion_network       = hcx_network_profile.net_vmotion.id
   dvs                   = "RegionA01-vDS-COMP"
 
   service {
@@ -67,10 +67,10 @@ output "compute_profile_1" {
 * `datacenter` - (Required) Datacenter where HCX Services will be available.
 * `cluster` - (Required) Cluster used for HCX appliances deployment.
 * `datastore` - (Required) Datastore used for HCX appliances deployment.
-* `management_network` - (Required) Management network profile.
-* `replication_network` - (Required) Replication network profile.
-* `vmotion_network` - (Required) vMotion network profile.
-* `uplink_network` - (Required) Uplink network profile.
+* `management_network` - (Required) Management network profile. (ID)
+* `replication_network` - (Required) Replication network profile. (ID)
+* `vmotion_network` - (Required) vMotion network profile. (ID)
+* `uplink_network` - (Required) Uplink network profile. (ID)
 * `dvs` - (Required) DVS used for L2 extension.
 * `service` - (Required) List of HCX services.
 

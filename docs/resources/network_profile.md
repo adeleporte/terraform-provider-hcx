@@ -60,7 +60,7 @@ resource "hcx_network_profile" "net_management" {
 
 ## Argument Reference
 
-* `vcenter` - (Required) Local vCenter Id.
+* `site_pairing` - (Required) Site Pairing map. To be retrieved with hcx_site_pairing resource.
 * `network_name` - (Required) Network Name used for this profile.
 * `name` - (Required) Name of the network profile.
 * `mtu` - (Required) MTU of the network profile.

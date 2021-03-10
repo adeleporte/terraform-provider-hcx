@@ -9,6 +9,77 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func NetSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"vmc": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+		},
+		"mtu": {
+			Type:     schema.TypeInt,
+			Required: true,
+		},
+		"prefix_length": {
+			Type:     schema.TypeInt,
+			Required: true,
+		},
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"gateway": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		},
+		"site_pairing": {
+			Type:     schema.TypeMap,
+			Required: true,
+		},
+		"primary_dns": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		},
+		"secondary_dns": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		},
+		"dns_suffix": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		},
+		"network_name": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"network_type": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "DistributedVirtualPortgroup",
+		},
+		"ip_range": {
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"start_address": {
+						Type:     schema.TypeString,
+						Required: true,
+					},
+					"end_address": {
+						Type:     schema.TypeString,
+						Required: true,
+					},
+				},
+			},
+		},
+	}
+}
+
 func resourceNetworkProfile() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceNetworkProfileCreate,
@@ -16,69 +87,7 @@ func resourceNetworkProfile() *schema.Resource {
 		UpdateContext: resourceNetworkProfileUpdate,
 		DeleteContext: resourceNetworkProfileDelete,
 
-		Schema: map[string]*schema.Schema{
-			"vmc": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-			"mtu": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"prefix_length": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"gateway": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
-			},
-			"vcenter": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"primary_dns": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
-			},
-			"secondary_dns": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
-			},
-			"dns_suffix": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
-			},
-			"network_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"ip_range": {
-				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"start_address": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"end_address": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
-			},
-		},
+		Schema: NetSchema(),
 	}
 }
 
@@ -97,16 +106,21 @@ func resourceNetworkProfileCreate(ctx context.Context, d *schema.ResourceData, m
 
 	name := d.Get("name").(string)
 	gateway := d.Get("gateway").(string)
-	vcuuid := d.Get("vcenter").(string)
+
 	primary_dns := d.Get("primary_dns").(string)
 	secondary_dns := d.Get("secondary_dns").(string)
 	dns_suffix := d.Get("dns_suffix").(string)
+
+	sp := d.Get("site_pairing").(map[string]interface{})
+	vcuuid := sp["local_vc"].(string)
+	vclocalendpointid := sp["local_endpoint_id"].(string)
 
 	network_name, ok := d.GetOk("network_name")
 	if !ok && !vmc {
 		return diag.Errorf("VMC switch is not enabled. Network name is mandatory")
 	}
-	network_id, err := hcx.GetNetworkBacking(client, vcuuid, network_name.(string))
+	network_type := d.Get("network_type").(string)
+	network_id, err := hcx.GetNetworkBacking(client, vclocalendpointid, network_name.(string), network_type)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +148,7 @@ func resourceNetworkProfileCreate(ctx context.Context, d *schema.ResourceData, m
 			BackingID:           network_id.EntityID,
 			BackingName:         network_name.(string),
 			VCenterInstanceUuid: vcuuid,
-			Type:                "DistributedVirtualPortgroup",
+			Type:                network_type,
 		},
 		},
 		IPScopes: []hcx.IPScope{
@@ -199,11 +213,16 @@ func resourceNetworkProfileUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	name := d.Get("name").(string)
 	gateway := d.Get("gateway").(string)
-	vcuuid := d.Get("vcenter").(string)
+
 	primary_dns := d.Get("primary_dns").(string)
 	secondary_dns := d.Get("secondary_dns").(string)
 	dns_suffix := d.Get("dns_suffix").(string)
 	network_name := d.Get("network_name").(string)
+	network_type := d.Get("network_type").(string)
+
+	sp := d.Get("site_pairing").(map[string]interface{})
+	vcuuid := sp["local_vc"].(string)
+	vclocalendpointid := sp["local_endpoint_id"].(string)
 
 	// Get IP Ranges from schema
 	ip_range := d.Get("ip_range").([]interface{})
@@ -232,7 +251,7 @@ func resourceNetworkProfileUpdate(ctx context.Context, d *schema.ResourceData, m
 		body.Name = name
 
 		// Get network details
-		network_id, err := hcx.GetNetworkBacking(client, vcuuid, network_name)
+		network_id, err := hcx.GetNetworkBacking(client, vclocalendpointid, network_name, network_type)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -241,7 +260,7 @@ func resourceNetworkProfileUpdate(ctx context.Context, d *schema.ResourceData, m
 			BackingID:           network_id.EntityID,
 			BackingName:         network_name,
 			VCenterInstanceUuid: vcuuid,
-			Type:                "DistributedVirtualPortgroup",
+			Type:                network_type,
 		}}
 	}
 
@@ -287,26 +306,27 @@ func resourceNetworkProfileDelete(ctx context.Context, d *schema.ResourceData, m
 	var err error
 
 	client := m.(*hcx.Client)
-	name := d.Get("name").(string)
+	//name := d.Get("name").(string)
 	vmc := d.Get("vmc").(bool)
 
 	if vmc {
 		// If VMC, don't really delete the network profile
 		// Read the exisint profile
-		body, err := hcx.GetNetworkProfile(client, name)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		/*
+			body, err := hcx.GetNetworkProfile(client, name)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 
-		// Empty the IP Ranges
-		body.IPScopes[0].NetworkIpRanges = []hcx.NetworkIpRange{}
+			// Empty the IP Ranges
+			body.IPScopes[0].NetworkIpRanges = []hcx.NetworkIpRange{}
 
-		res, err = hcx.UpdateNetworkProfile(client, body)
+			res, err = hcx.UpdateNetworkProfile(client, body)
 
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		*/
 		return diags
 	} else {
 		res, err = hcx.DeleteNetworkProfile(client, d.Id())

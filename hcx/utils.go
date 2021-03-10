@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -74,18 +75,24 @@ type PostNetworkBackingBody struct {
 }
 
 type PostNetworkBackingBodyFilter struct {
-	VCenterInstanceUuid string   `json:"vCenterInstanceUuid"`
-	ExcludeUsed         bool     `json:"excludeUsed"`
-	BackingTypes        []string `json:"backingTypes"`
+	Cloud PostCloudListResultDataItem `json:"cloud"`
+	//VCenterInstanceUuid string   `json:"vCenterInstanceUuid"`
+	//ExcludeUsed         bool     `json:"excludeUsed"`
+	//BackingTypes        []string `json:"backingTypes"`
 }
 
 type PostNetworkBackingResult struct {
-	Dvpgs []Dvpg `json:"dvpgs"`
+	Data PostNetworkBackingResultData `json:"data"`
+}
+
+type PostNetworkBackingResultData struct {
+	Items []Dvpg `json:"items"`
 }
 
 type Dvpg struct {
-	EntityID string `json:"entity_id"`
-	Name     string `json:"name"`
+	EntityID   string `json:"entity_id"`
+	Name       string `json:"name"`
+	EntityType string `json:"entityType"`
 }
 
 type GetVcInventoryResult struct {
@@ -196,10 +203,10 @@ type PostCloudListResultData struct {
 }
 
 type PostCloudListResultDataItem struct {
-	EndpointId   string `json:"endpointId"`
-	Name         string `json:"name"`
-	URL          string `json:"url"`
-	EndpointType string `json:"endpointType"`
+	EndpointId   string `json:"endpointId,omitempty"`
+	Name         string `json:"name,omitempty"`
+	URL          string `json:"url,omitempty"`
+	EndpointType string `json:"endpointType,omitempty"`
 }
 
 type GetApplianceBody struct {
@@ -209,6 +216,7 @@ type GetApplianceBody struct {
 type GetApplianceBodyFilter struct {
 	ApplianceType string `json:"applianceType"`
 	EndpointId    string `json:"endpointId"`
+	ServiceMeshId string `json:"serviceMeshId,omitempty"`
 }
 
 type GetApplianceResult struct {
@@ -216,7 +224,9 @@ type GetApplianceResult struct {
 }
 
 type GetApplianceResultItem struct {
-	ApplianceId string `json:"applianceId"`
+	ApplianceId           string `json:"applianceId"`
+	ServiceMeshId         string `json:"serviceMeshId"`
+	NetworkExtensionCount int    `json:"networkExtensionCount"`
 }
 
 // GetJobResult ...
@@ -356,13 +366,13 @@ func GetRemoteContainer(c *Client) (PostResouceContainerListResultDataItem, erro
 }
 
 // GetNetworkBacking ...
-func GetNetworkBacking(c *Client, vcuuid string, network string) (Dvpg, error) {
+func GetNetworkBacking(c *Client, endpointid string, network string, network_type string) (Dvpg, error) {
 
 	body := PostNetworkBackingBody{
 		Filter: PostNetworkBackingBodyFilter{
-			VCenterInstanceUuid: vcuuid,
-			ExcludeUsed:         false,
-			BackingTypes:        []string{"dvpg"},
+			Cloud: PostCloudListResultDataItem{
+				EndpointId: endpointid,
+			},
 		},
 	}
 
@@ -371,7 +381,7 @@ func GetNetworkBacking(c *Client, vcuuid string, network string) (Dvpg, error) {
 
 	resp := PostNetworkBackingResult{}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/admin/hybridity/api/networkBackings?action=query", c.HostURL), buf)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/hybridity/api/service/inventory/networks", c.HostURL), buf)
 	if err != nil {
 		fmt.Println(err)
 		return Dvpg{}, err
@@ -391,8 +401,12 @@ func GetNetworkBacking(c *Client, vcuuid string, network string) (Dvpg, error) {
 		return Dvpg{}, err
 	}
 
-	for _, j := range resp.Dvpgs {
-		if j.Name == network {
+	log.Printf("*************************************")
+	log.Printf("networks list: %+v", resp)
+	log.Printf("*************************************")
+
+	for _, j := range resp.Data.Items {
+		if j.Name == network && j.EntityType == network_type {
 			return j, nil
 		}
 	}
@@ -596,7 +610,7 @@ func GetLocalCloudList(c *Client) (PostCloudListResult, error) {
 }
 
 // GetRemoteCloudList ...
-func GetAppliance(c *Client, endpointId string) (GetApplianceResultItem, error) {
+func GetAppliance(c *Client, endpointId string, service_mesh_id string) (GetApplianceResultItem, error) {
 
 	body := GetApplianceBody{
 		Filter: GetApplianceBodyFilter{
@@ -630,5 +644,50 @@ func GetAppliance(c *Client, endpointId string) (GetApplianceResultItem, error) 
 		return GetApplianceResultItem{}, err
 	}
 
+	for _, j := range resp.Items {
+		if j.ServiceMeshId == service_mesh_id && j.NetworkExtensionCount < 9 {
+			return j, nil
+		}
+	}
+
 	return resp.Items[0], nil
+}
+
+// GetRemoteCloudList ...
+func GetAppliances(c *Client, endpointId string, service_mesh_id string) ([]GetApplianceResultItem, error) {
+
+	body := GetApplianceBody{
+		Filter: GetApplianceBodyFilter{
+			ApplianceType: "HCX-NET-EXT",
+			EndpointId:    endpointId,
+			ServiceMeshId: service_mesh_id,
+		},
+	}
+
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(body)
+
+	resp := GetApplianceResult{}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/hybridity/api/interconnect/appliances/query", c.HostURL), buf)
+	if err != nil {
+		fmt.Println(err)
+		return []GetApplianceResultItem{}, err
+	}
+
+	// Send the request
+	_, r, err := c.doRequest(req)
+	if err != nil {
+		fmt.Println(err)
+		return []GetApplianceResultItem{}, err
+	}
+
+	// parse response body
+	err = json.Unmarshal(r, &resp)
+	if err != nil {
+		fmt.Println(err)
+		return []GetApplianceResultItem{}, err
+	}
+
+	return resp.Items, nil
 }

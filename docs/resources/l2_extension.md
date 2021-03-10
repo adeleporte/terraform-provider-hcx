@@ -13,10 +13,16 @@ resource "hcx_l2_extension" "l2_extension_1" {
   site_pairing                    = hcx_site_pairing.site1
   service_mesh_name               = hcx_service_mesh.service_mesh_1.name
   source_network                  = "VM-RegionA01-vDS-COMP"
+  NsxtSegment                     = ""
 
   destination_t1                  = "T1-GW"
   gateway                         = "2.2.2.2"
   netmask                         = "255.255.255.0"
+
+  egress_optimization             = false
+  mon                             = true
+
+  appliance_id                    = hcx_service_mesh.service_mesh_1.appliances_id[1].id
 
 }
 
@@ -34,6 +40,10 @@ output "l2_extension_1" {
 * `destination_t1` - (Required) Name of the T1 NSX-T router at destination.
 * `gateway` - (Required) Gateway address to configure on the T1. Should be equal to the existing default gateway at source site.
 * `netmask` - (Required) Netmask
+* `network_type` - (Optional) Network Backing type. Default is `DistributedVirtualPortgroup`. Accepted Values are `DistributedVirtualPortgroup` and `NsxtSegment`
+* `appliance_id` - (Optional) ID of the NE appliance to use for the L2 extension. If not specified, the first appliance is chosen.
+* `mon` - (Optional - Default is false) Enable the MON (Mobility Optimized Networking) feature. Need Enterprise Licence.
+* `egress_optimization` - (Optional - Default is false) Enable the Egress Optimization feature. Need Enterprise Licence.
 
 ## Attribute Reference
 

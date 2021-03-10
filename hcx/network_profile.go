@@ -138,6 +138,49 @@ func GetNetworkProfile(c *Client, name string) (NetworkProfileBody, error) {
 	return NetworkProfileBody{}, errors.New("cannot find network profile")
 }
 
+// GetNetworkProfileById ...
+func GetNetworkProfileById(c *Client, id string) (NetworkProfileBody, error) {
+
+	resp := []NetworkProfileBody{}
+	body := NetworkFilter{
+		Filter: Filter{
+			OwnedBySystem:        true,
+			AllowTrunkInterfaces: false,
+		},
+	}
+
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(body)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/hybridity/api/networks?action=queryIpUsage", c.HostURL), buf)
+	if err != nil {
+		fmt.Println(err)
+		return NetworkProfileBody{}, err
+	}
+
+	// Send the request
+	_, r, err := c.doRequest(req)
+	if err != nil {
+		fmt.Println(err)
+		return NetworkProfileBody{}, err
+	}
+
+	// parse response body
+	err = json.Unmarshal(r, &resp)
+	if err != nil {
+		fmt.Println(err)
+		return NetworkProfileBody{}, err
+	}
+
+	for _, j := range resp {
+		if j.ObjectId == id {
+			return j, nil
+		}
+	}
+
+	return NetworkProfileBody{}, errors.New("cannot find network profile")
+}
+
 // DeleteNetworkProfile ...
 func DeleteNetworkProfile(c *Client, networkID string) (NetworkProfileResult, error) {
 

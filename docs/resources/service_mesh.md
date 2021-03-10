@@ -63,6 +63,7 @@ output "service_mesh_1" {
 * `uplink_max_bandwidth` - (Optional) Maximum bandwidth used for uplinks. Default is `10000`.
 * `service` - (Required) List of HCX services. (Services selected here must be part of the compute profiles selected).
 * `force_delete` - (Optional) Enable/Disable Force Delete of the Service Mesh. Sometimes need when site pairing is not connected anymore.
+* `nb_appliances` - (Optional - Default is 1) Nb of NE appliances to deploy (each NE appliance can extend 8 networks)
 
 ### Service argument Reference
 * `name` - (Required) Name of the HCX service. Value values are: `INTERCONNECT`, `WANOPT`, `VMOTION`, `BULK_MIGRATION`, `RAV`, `NETWORK_EXTENSION`, `DISASTER_RECOVERY`, `SRM`
