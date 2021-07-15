@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"log"
 )
 
 type SDDC struct {
@@ -61,7 +62,7 @@ func VmcAuthenticate(token string) (string, error) {
 
 	_, r, err := c.doVmcRequest(req)
 	if err != nil {
-		return "", err
+		return  "", err
 	}
 
 	resp := VmcAccessToken{}
@@ -73,11 +74,16 @@ func VmcAuthenticate(token string) (string, error) {
 	}
 
 	// parse response header
+
+	log.Printf("**************************")
+	log.Printf("[Access token] = %+v", resp.AccessToken)
+	log.Printf("**************************")
+
 	return resp.AccessToken, nil
 
 }
 
-func HcxCloudAuthenticate(access_token string) (string, error) {
+func HcxCloudAuthenticate(client *Client, token string) (error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
@@ -85,7 +91,7 @@ func HcxCloudAuthenticate(access_token string) (string, error) {
 	}
 
 	body := HcxCloudAuthorizationBody{
-		Token: access_token,
+		Token: token,
 	}
 
 	buf := new(bytes.Buffer)
@@ -93,30 +99,37 @@ func HcxCloudAuthenticate(access_token string) (string, error) {
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/sessions", c.HostURL), buf)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	resp, _, err := c.doVmcRequest(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	auth := resp.Header.Get("x-hm-authorization")
 	if auth == "" {
-		return "", errors.New("cannot authorize hcx cloud")
+		return errors.New("cannot authorize hcx cloud")
 	}
 
 	// parse response header
-	return auth, nil
+	client.HcxToken = auth
+
+	// parse response header
+
+	log.Printf("**************************")
+	log.Printf("[Hcx token] = %+v", client.HcxToken)
+	log.Printf("**************************")
+	return nil
 
 }
 
-func GetSddcByName(hcx_auth, sddc_name string) (SDDC, error) {
+func GetSddcByName(client *Client, sddc_name string) (SDDC, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
 		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:      hcx_auth,
+		HcxToken:      client.HcxToken,
 	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/sddcs", c.HostURL), nil)
@@ -148,12 +161,12 @@ func GetSddcByName(hcx_auth, sddc_name string) (SDDC, error) {
 
 }
 
-func GetSddcByID(hcx_auth, sddcID string) (SDDC, error) {
+func GetSddcByID(client *Client, sddcID string) (SDDC, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
 		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:      hcx_auth,
+		HcxToken:      client.HcxToken,
 	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/sddcs", c.HostURL), nil)
@@ -185,14 +198,14 @@ func GetSddcByID(hcx_auth, sddcID string) (SDDC, error) {
 
 }
 
-func ActivateHcxOnSDDC(hcx_auth, sddc_id string) (ActivateHcxOnSDDCResults, error) {
+func ActivateHcxOnSDDC(client *Client, sddc_id string) (ActivateHcxOnSDDCResults, error) {
 
 	resp := ActivateHcxOnSDDCResults{}
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
 		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:      hcx_auth,
+		HcxToken:      client.HcxToken,
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/sddcs/%s?action=activate", c.HostURL, sddc_id), nil)
@@ -217,14 +230,14 @@ func ActivateHcxOnSDDC(hcx_auth, sddc_id string) (ActivateHcxOnSDDCResults, erro
 
 }
 
-func DeactivateHcxOnSDDC(hcx_auth, sddc_id string) (DeactivateHcxOnSDDCResults, error) {
+func DeactivateHcxOnSDDC(client *Client, sddc_id string) (DeactivateHcxOnSDDCResults, error) {
 
 	resp := DeactivateHcxOnSDDCResults{}
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 60 * time.Second},
 		HostURL:    "https://connect.hcx.vmware.com/provider/csp/consumer",
-		Token:      hcx_auth,
+		HcxToken:      client.HcxToken,
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/sddcs/%s?action=deactivate", c.HostURL, sddc_id), nil)

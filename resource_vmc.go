@@ -7,6 +7,8 @@ import (
 	hcx "github.com/adeleporte/terraform-provider-hcx/hcx"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"log"
 )
 
 func resourceVmc() *schema.Resource {
@@ -17,12 +19,6 @@ func resourceVmc() *schema.Resource {
 		DeleteContext: resourceVmcDelete,
 
 		Schema: map[string]*schema.Schema{
-			"token": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Sensitive:   true,
-				DefaultFunc: schema.EnvDefaultFunc("VMC_API_TOKEN", nil),
-			},
 			"sddc_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -49,9 +45,9 @@ func resourceVmc() *schema.Resource {
 
 func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	//client := m.(*hcx.Client)
+	client := m.(*hcx.Client)
 
-	token := d.Get("token").(string)
+	token := client.Token
 	sddc_name := d.Get("sddc_name").(string)
 	sddcID := d.Get("sddc_id").(string)
 
@@ -65,16 +61,16 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	hcx_auth, err := hcx.HcxCloudAuthenticate(access_token)
+	err = hcx.HcxCloudAuthenticate(client, access_token)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	var sddc hcx.SDDC
 	if sddcID != "" {
-		sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+		sddc, err = hcx.GetSddcByID(client, sddcID)
 	} else {
-		sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+		sddc, err = hcx.GetSddcByName(client, sddc_name)
 	}
 
 	if err != nil {
@@ -87,7 +83,7 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	// Activate HCX
-	_, err = hcx.ActivateHcxOnSDDC(hcx_auth, sddc.ID)
+	_, err = hcx.ActivateHcxOnSDDC(client, sddc.ID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -95,9 +91,9 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	// Wait for task to be completed
 	for {
 		if sddcID != "" {
-			sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+			sddc, err = hcx.GetSddcByID(client, sddcID)
 		} else {
-			sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+			sddc, err = hcx.GetSddcByName(client, sddc_name)
 		}
 		if err != nil {
 			return diag.FromErr(err)
@@ -120,9 +116,16 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 func resourceVmcRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	token := d.Get("token").(string)
+	client := m.(*hcx.Client)
+
+	token := client.Token
 	sddc_name := d.Get("sddc_name").(string)
 	sddcID := d.Get("sddc_id").(string)
+
+	log.Printf("******************************************************************\n")
+	log.Printf("token: %s, sddc_name: %s,   sddc: %s   \n", token, sddc_name, sddcID)
+	log.Printf("******************************************************************\n")
+
 
 	if sddc_name == "" && sddcID == "" {
 		return diag.Errorf("SDDC name or Id must be specified")
@@ -134,16 +137,20 @@ func resourceVmcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	hcx_auth, err := hcx.HcxCloudAuthenticate(access_token)
+	err = hcx.HcxCloudAuthenticate(client, access_token)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	log.Printf("****************")
+	log.Printf("[Client inside]: %+v ", client)
+	log.Printf("****************")
+
 	var sddc hcx.SDDC
 	if sddcID != "" {
-		sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+		sddc, err = hcx.GetSddcByID(client, sddcID)
 	} else {
-		sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+		sddc, err = hcx.GetSddcByName(client, sddc_name)
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -165,7 +172,9 @@ func resourceVmcUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	token := d.Get("token").(string)
+	client := m.(*hcx.Client)
+
+	token := client.Token
 	sddc_name := d.Get("sddc_name").(string)
 	sddcID := d.Get("sddc_id").(string)
 
@@ -175,23 +184,23 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	hcx_auth, err := hcx.HcxCloudAuthenticate(access_token)
+	err = hcx.HcxCloudAuthenticate(client, access_token)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	var sddc hcx.SDDC
 	if sddcID != "" {
-		sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+		sddc, err = hcx.GetSddcByID(client, sddcID)
 	} else {
-		sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+		sddc, err = hcx.GetSddcByName(client, sddc_name)
 	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// Deactivate HCX
-	_, err = hcx.DeactivateHcxOnSDDC(hcx_auth, sddc.ID)
+	_, err = hcx.DeactivateHcxOnSDDC(client, sddc.ID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -200,9 +209,9 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	for {
 		var sddc hcx.SDDC
 		if sddcID != "" {
-			sddc, err = hcx.GetSddcByID(hcx_auth, sddcID)
+			sddc, err = hcx.GetSddcByID(client, sddcID)
 		} else {
-			sddc, err = hcx.GetSddcByName(hcx_auth, sddc_name)
+			sddc, err = hcx.GetSddcByName(client, sddc_name)
 		}
 		if err != nil {
 			return diag.FromErr(err)

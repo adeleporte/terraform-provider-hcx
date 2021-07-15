@@ -40,6 +40,12 @@ func Provider() *schema.Provider {
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("HCX_ADMIN_PASSWORD", nil),
 			},
+			"vmc_token": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("VMC_API_TOKEN", nil),
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"hcx_site_pairing":    resourceSitePairing(),
@@ -70,8 +76,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	password := d.Get("password").(string)
 	adminusername := d.Get("admin_username").(string)
 	adminpassword := d.Get("admin_password").(string)
+	vmc_token := d.Get("vmc_token").(string)
 
-	c, err := hcx.NewClient(&hcxurl, &username, &password, &adminusername, &adminpassword)
+	c, err := hcx.NewClient(&hcxurl, &username, &password, &adminusername, &adminpassword, &vmc_token)
 	//c := &http.Client{Timeout: 10 * time.Second}
 
 	if err != nil {
@@ -86,6 +93,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 			AttributePath: cty.Path{cty.GetAttrStep{Name: "hcx"}},
 		})
 	}
+
+	c.Token = vmc_token
 
 	return c, diags
 }

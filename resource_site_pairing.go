@@ -83,7 +83,6 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 		},
 	}
 
-	//time.Sleep(10 * time.Second)
 	res, err := hcx.InsertSitePairing(client, body)
 
 	if err != nil {
@@ -96,17 +95,23 @@ func resourceSitePairingCreate(ctx context.Context, d *schema.ResourceData, m in
 			return diag.Errorf("%s", res.Errors[0].Text)
 		}
 
-		// Try to get certificate
-		certificate_raw := res.Errors[0].Data[0]
-		certificate := certificate_raw["certificate"].(string)
+		if len(res.Errors[0].Data) > 0 {
+			// Try to get certificate
+			certificate_raw := res.Errors[0].Data[0]
+			certificate, ok := certificate_raw["certificate"].(string)
 
-		// Add certificate
-		body := hcx.InsertCertificateBody{
-			Certificate: certificate,
-		}
-		_, err := hcx.InsertCertificate(client, body)
-		if err != nil {
-			return diag.FromErr(err)
+			if ok {
+				// Add certificate
+				body := hcx.InsertCertificateBody{
+					Certificate: certificate,
+				}
+				_, err := hcx.InsertCertificate(client, body)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		} else {
+			return diag.Errorf("Unknown error(s): %+v", res.Errors)
 		}
 
 		second_try = true

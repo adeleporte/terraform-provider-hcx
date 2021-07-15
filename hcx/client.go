@@ -17,6 +17,7 @@ type Client struct {
 	HostURL         string
 	HTTPClient      *http.Client
 	Token           string
+	HcxToken        string
 	AdminUsername   string
 	AdminPassword   string
 	Username        string
@@ -137,15 +138,18 @@ func (c *Client) HcxConnectorAuthenticate() error {
 }
 
 // NewClient -
-func NewClient(hcx, username *string, password *string, adminusername *string, adminpassword *string) (*Client, error) {
+func NewClient(hcx, username *string, password *string, adminusername *string, adminpassword *string, vmc_token *string) (*Client, error) {
 	c := Client{
-		HTTPClient:      &http.Client{Timeout: 10 * time.Second},
+		HTTPClient: &http.Client{
+			Timeout: 60 * time.Second,
+		},
 		HostURL:         *hcx,
 		Username:        *username,
 		Password:        *password,
 		AdminUsername:   *adminusername,
 		AdminPassword:   *adminpassword,
 		IsAuthenticated: false,
+		Token:           *vmc_token,
 	}
 
 	return &c, nil
@@ -230,10 +234,9 @@ func (c *Client) doVmcRequest(req *http.Request) (*http.Response, []byte, error)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	if c.Token != "" {
-		req.Header.Set("x-hm-authorization", fmt.Sprintf("%s", c.Token))
+	if c.HcxToken != "" {
+		req.Header.Set("x-hm-authorization", fmt.Sprintf("%s", c.HcxToken))
 	}
-
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	res, err := c.HTTPClient.Do(req)

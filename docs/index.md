@@ -127,6 +127,8 @@ provider "hcx" {
 
   username  = "administrator@corp.local"
   password  = "changeme"
+
+  token     = "234567893245678345678" // Only needed if HCX on VMC on AWS SDDC need to be managed by TF
 }
 ```
 
@@ -137,6 +139,6 @@ provider "hcx" {
 * `admin_password` - (Optional) Password of the HCX appliance. Only need if you want to manageable appliance setup.
 * `username` - (Optional) Username for HCX consumption. SSO/vSphere Role Mappings need to be set.
 * `password` - (Optional) Password for HCX consumption. SSO/vSphere Role Mappings need to be set.
-
+* `token` - (Required) VMware Cloud Service API Token. Generated from the VMware Cloud Services Console / My account / API Tokens. Environment variable VMC_API_TOKEN can be used to avoid setting the token in the code.
 
 

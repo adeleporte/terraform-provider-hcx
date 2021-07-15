@@ -30,6 +30,9 @@ provider hcx {
 
     username        = "administrator@vsphere.local"
     password        = "VMware1!"
+
+    // token = "xxx" if VMC
+    // export VMC_API_TOKEN=...
 }
 
 // Variables definitions
@@ -92,7 +95,6 @@ resource "hcx_location" "location" {
 // Datasources and Resources
 resource "hcx_vmc" "vmc_nico" {  
     sddc_name   = "mySDDC-name"
-    //export VMC_API_TOKEN=...
 }
 
 resource "hcx_site_pairing" "vmc" {
