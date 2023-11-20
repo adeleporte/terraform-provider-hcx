@@ -48,7 +48,7 @@ type PostResouceContainerListBody struct {
 type PostResouceContainerListResult struct {
 	Success   bool                               `json:"success"`
 	Completed bool                               `json:"completed"`
-	Time      int                                `json:"time"`
+	Time      uint64                             `json:"time"`
 	Data      PostResouceContainerListResultData `json:"data"`
 }
 
@@ -130,7 +130,7 @@ type GetVcInventoryResultDataItemChildrenChildren struct {
 type GetVcDatastoreResult struct {
 	Success   bool                     `json:"success"`
 	Completed bool                     `json:"completed"`
-	Time      int                      `json:"time"`
+	Time      uint64                   `json:"time"`
 	Data      GetVcDatastoreResultData `json:"data"`
 }
 
@@ -157,7 +157,7 @@ type GetVcDatastoreFilter struct {
 type GetVcDvsResult struct {
 	Success   bool               `json:"success"`
 	Completed bool               `json:"completed"`
-	Time      int                `json:"time"`
+	Time      uint64             `json:"time"`
 	Data      GetVcDvsResultData `json:"data"`
 }
 
@@ -194,7 +194,7 @@ type PostCloudListBody struct {
 type PostCloudListResult struct {
 	Success   bool                    `json:"success"`
 	Completed bool                    `json:"completed"`
-	Time      int                     `json:"time"`
+	Time      uint64                  `json:"time"`
 	Data      PostCloudListResultData `json:"data"`
 }
 
