@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	hcx "github.com/adeleporte/terraform-provider-hcx/hcx"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	hcx "github.com/adeleporte/terraform-provider-hcx/hcx"
 
 	"log"
 )
@@ -89,6 +90,7 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	// Wait for task to be completed
+	errcount := 0
 	for {
 		if sddcID != "" {
 			sddc, err = hcx.GetSddcByID(client, sddcID)
@@ -96,7 +98,14 @@ func resourceVmcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 			sddc, err = hcx.GetSddcByName(client, sddc_name)
 		}
 		if err != nil {
-			return diag.FromErr(err)
+			// Attempt to bypass recurring situation where the HCX API
+			// returns status 502 with a proxy server error, and an HTML response
+			// instead of JSON.
+			errcount += 1
+			hclog.Default().Info("[INFO] - resourceVmcCreate() - Error retrieving SDDC status: ", "error", err.Error(), "Errcount:", errcount)
+			if errcount > 12 {
+				return diag.FromErr(err)
+			}
 		}
 
 		if sddc.DeploymentStatus == "ACTIVE" {
@@ -125,7 +134,6 @@ func resourceVmcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	log.Printf("******************************************************************\n")
 	log.Printf("token: %s, sddc_name: %s,   sddc: %s   \n", token, sddc_name, sddcID)
 	log.Printf("******************************************************************\n")
-
 
 	if sddc_name == "" && sddcID == "" {
 		return diag.Errorf("SDDC name or Id must be specified")
@@ -206,6 +214,7 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	// Wait for task to be completed
+	errcount := 0
 	for {
 		var sddc hcx.SDDC
 		if sddcID != "" {
@@ -214,7 +223,14 @@ func resourceVmcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 			sddc, err = hcx.GetSddcByName(client, sddc_name)
 		}
 		if err != nil {
-			return diag.FromErr(err)
+			// Attempt to bypass recurring situation where the HCX API
+			// returns status 502 with a proxy server error, and an HTML response
+			// instead of JSON.
+			errcount += 1
+			hclog.Default().Info("[INFO] - resourceVmcDelete() - Error retrieving SDDC status: ", "error", err.Error(), "Errcount:", errcount)
+			if errcount > 12 {
+				return diag.FromErr(err)
+			}
 		}
 
 		if sddc.DeploymentStatus == "DE-ACTIVATED" {
