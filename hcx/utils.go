@@ -17,14 +17,14 @@ type Job_result struct {
 	IsQueued                bool   `json:"isQueued"`
 	IsCancelled             bool   `json:"isCancelled"`
 	IsRolledBack            bool   `json:"isRolledBack"`
-	CreateTimeEpoch         int    `json:"createTimeEpoch"`
-	AbsoluteExpireTimeEpoch int    `json:"absoluteExpireTimeEpoch"`
-	StartTime               int    `json:"startTime"`
-	EndTime                 int    `json:"endTime"`
+	CreateTimeEpoch         int64  `json:"createTimeEpoch"`
+	AbsoluteExpireTimeEpoch int64  `json:"absoluteExpireTimeEpoch"`
+	StartTime               int64  `json:"startTime"`
+	EndTime                 int64  `json:"endTime"`
 	PercentComplete         int    `json:"percentComplete"`
 	IsDone                  bool   `json:"isDone"`
 	DidFail                 bool   `json:"didFail"`
-	TimeToExecute           int    `json:"timeToExecute"`
+	TimeToExecute           int64  `json:"timeToExecute"`
 }
 
 type Task_result struct {
@@ -48,7 +48,7 @@ type PostResouceContainerListBody struct {
 type PostResouceContainerListResult struct {
 	Success   bool                               `json:"success"`
 	Completed bool                               `json:"completed"`
-	Time      int                                `json:"time"`
+	Time      int64                              `json:"time"`
 	Data      PostResouceContainerListResultData `json:"data"`
 }
 
@@ -130,7 +130,7 @@ type GetVcInventoryResultDataItemChildrenChildren struct {
 type GetVcDatastoreResult struct {
 	Success   bool                     `json:"success"`
 	Completed bool                     `json:"completed"`
-	Time      int                      `json:"time"`
+	Time      int64                    `json:"time"`
 	Data      GetVcDatastoreResultData `json:"data"`
 }
 
@@ -157,7 +157,7 @@ type GetVcDatastoreFilter struct {
 type GetVcDvsResult struct {
 	Success   bool               `json:"success"`
 	Completed bool               `json:"completed"`
-	Time      int                `json:"time"`
+	Time      int64              `json:"time"`
 	Data      GetVcDvsResultData `json:"data"`
 }
 
@@ -194,7 +194,7 @@ type PostCloudListBody struct {
 type PostCloudListResult struct {
 	Success   bool                    `json:"success"`
 	Completed bool                    `json:"completed"`
-	Time      int                     `json:"time"`
+	Time      int64                   `json:"time"`
 	Data      PostCloudListResultData `json:"data"`
 }
 

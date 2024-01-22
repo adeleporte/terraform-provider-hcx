@@ -17,7 +17,7 @@ Documentation on HCX can be found at the [VMware HCX Documentation page](hhttps:
 
 # Using the Provider
 
-The latest version of this provider requires Terraform v0.13 or higher to run.
+The latest version of this provider requires Terraform v1.6.1 or higher to run.
 
 Note that you need to run `terraform init` to fetch the provider before
 deploying. Read about the provider split and other changes to TF v0.10.0 in the

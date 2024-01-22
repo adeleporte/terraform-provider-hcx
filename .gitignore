@@ -37,3 +37,5 @@ terraform.rc
 terraform
 
 examples
+
+registry.terraform.io/*
